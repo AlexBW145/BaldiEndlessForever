@@ -1,0 +1,12 @@
+{"items":[
+
+{"key":"Men_Floor","value":"Starting Floor: "},
+{"key":"Men_ENDDesc","value":"Play an endless gauntlet of floors. How many floors can you complete?"},
+{"key":"Men_ContENDDesc","value":"<color=green>Resume your endless gauntlet of floors right where you left off!\n(Floor {0} starting from {1})</color>"},
+{"key":"Men_END","value":"Arcade"},
+
+{"key":"Men_Floor99Desc","value":"<size=75%>99 is life, NINENIENE is everying! 99 exits, 99th floor, 71 notebooks? That should be NINENINE!<size=70%>(Completing this mode will NOT unlock Floors 1-99!)"},
+{"key":"But_Floor99","value":"<size=85%> <color=blue>NINENINE Remix"}
+
+
+]}
