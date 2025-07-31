@@ -391,6 +391,37 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
         arcadeAssets.AddRange([AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Tubes4.png"), 1f), AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Tubes5.png"), 1f), AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Tubes6.png"), 1f)], ["LifeTubes4", "LifeTubes5", "LifeTubes6"]);
         arcadeAssets.Add("TimeSlow", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Effects", "TimeSlow.wav"), "Sfx_TimeSlow", SoundType.Effect, Color.blue));
         arcadeAssets.Add("TimeFast", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Effects", "TimeFastFast.wav"), "Sfx_TimeFast", SoundType.Effect, Color.blue));
+        var green = (Color)Resources.FindObjectsOfTypeAll<Baldi>().Last().AudMan.ReflectionGetVariable("subtitleColor");
+        arcadeAssets.Add("AllNotebooksRegular", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "BAL_AllNotebooks_INF.wav"), "Vfx_BAL_Tutorial_AllNotebooks_0", SoundType.Voice, green));
+        var allRegular = arcadeAssets.Get<SoundObject>("AllNotebooksRegular");
+        allRegular.additionalKeys = [
+            new SubtitleTimedKey()
+            {
+                time = 5.197f,
+                key = "Vfx_BAL_AllNotebooks_3"
+            },
+            new SubtitleTimedKey()
+            {
+                time = 8.407f,
+                key = "Vfx_BAL_AllNotebooks_4"
+            },
+            new SubtitleTimedKey()
+            {
+                time = 15.121f,
+                key = "Vfx_BAL_AllNotebooks_5"
+            },
+            ];
+        arcadeAssets.Add("AllNotebooksF99", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "BAL_AllNotebooks_INFF99.wav"), "Vfx_BAL_Tutorial_AllNotebooks_0", SoundType.Voice, green));
+        var allF99 = arcadeAssets.Get<SoundObject>("AllNotebooksF99");
+        allF99.additionalKeys = [
+            new SubtitleTimedKey()
+            {
+                time = 5.198f,
+                key = "Vfx_BAL_TimeOut_2"
+            }
+            ];
+        AccessTools.Field(typeof(MainGameManager), "allNotebooksNotification").SetValue(inflevel.manager, allRegular);
+        ((InfGameManager)inflevel.manager).F99AllNotebooks = allF99;
         string iconPath = Path.Combine(AssetLoader.GetModPath(this), "UpgradeIcons");
         foreach (string p in Directory.GetFiles(iconPath))
         {
