@@ -1,4 +1,4 @@
-# <img width="909" height="461" src="Resources/Logo.png" />
+# <img width="909" height="461" src="Source/Logo.png" />
 
 A continuation of the Infinite Floors mod aka: Arcade Mode
 
