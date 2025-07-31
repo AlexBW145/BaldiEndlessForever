@@ -309,7 +309,7 @@ public static class EndlessUpgradeRegisters
                 new UpgradeLevel()
                 {
                     icon="SlotPlus",
-                    cost=1000,
+                    cost=700,
                     descLoca="Upg_ItemSlot"
                 },
                 new UpgradeLevel()
@@ -321,7 +321,7 @@ public static class EndlessUpgradeRegisters
                 new UpgradeLevel()
                 {
                     icon="SlotPlus",
-                    cost=700,
+                    cost=1000,
                     descLoca="Upg_ItemSlot"
                 },
                 new UpgradeLevel()

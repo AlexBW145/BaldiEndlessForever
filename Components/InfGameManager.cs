@@ -113,7 +113,7 @@ public class InfGameManager : MainGameManager
             lvlObj.hallFloorTexs = [new WeightedTexture2D() { weight = 100, selection = potentialSets[SetVal].Item3 }];
             lvlObj.hallCeilingTexs = [new WeightedTexture2D() { weight = 100, selection = potentialSets[SetVal].Item2 }];
         }
-        else
+        else if (EndlessForeverPlugin.wallTextures.Count > 0 && EndlessForeverPlugin.floorTextures.Count > 0 && EndlessForeverPlugin.ceilTextures.Count > 0)
         {
             lvlObj.hallWallTexs = [.. lvlObj.hallWallTexs, .. EndlessForeverPlugin.wallTextures.ToArray()];
             lvlObj.hallFloorTexs = [.. lvlObj.hallFloorTexs, .. EndlessForeverPlugin.floorTextures.ToArray()];
@@ -168,6 +168,8 @@ public class InfGameManager : MainGameManager
         List<string> possibleStores = ["Store", "UpgradeStation", "BountyStation"];
         possibleStores.ControlledShuffle(rng);
         string[] stores = new string[Mathf.Min(((currentFD.FloorID % 4) == 0) ? Mathf.CeilToInt(currentFD.FloorID / 20f) : 0, possibleStores.Count)];
+        if (stores.Length == 1)
+            possibleStores.Remove("UpgradeStation"); // Make it not appear as the only shop.
         for (int i = 0; i < stores.Length; i++)
             stores[i] = possibleStores[i];
         foreach (var store in stores)
@@ -211,7 +213,7 @@ public class InfGameManager : MainGameManager
             classRoomGroup.wallTexture = [new WeightedTexture2D() { weight = 100, selection = potentialSets[SetVal].Item1 }];
             classRoomGroup.ceilingTexture = [new WeightedTexture2D() { weight = 100, selection = potentialSets[SetVal].Item2 }];
         }
-        else
+        else if (EndlessForeverPlugin.wallTextures.Count > 0 && EndlessForeverPlugin.profFloorTextures.Count > 0 && EndlessForeverPlugin.ceilTextures.Count > 0)
         {
             classRoomGroup.floorTexture = EndlessForeverPlugin.profFloorTextures.ToArray();
             classRoomGroup.wallTexture = EndlessForeverPlugin.wallTextures.ToArray();
@@ -348,6 +350,8 @@ public class InfGameManager : MainGameManager
                 EndlessForeverPlugin.Instance.SaveData();
         }
         CoreGameManager.Instance.levelMapHasBeenPurchasedFor = null;
+        if ((EndlessForeverPlugin.Instance.gameSave.currentFloor % 8) == 0)
+            CoreGameManager.Instance.tripAvailable = true;
         base.LoadNextLevel();
     }
 

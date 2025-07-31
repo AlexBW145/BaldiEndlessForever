@@ -130,12 +130,14 @@ namespace EndlessFloorsForever.Patches
             private int bootsActive = 0;
             MovementModifier speedMod = new MovementModifier(Vector3.zero, 1f + EndlessForeverPlugin.Instance.GetUpgradeCount("speedyboots") * 0.2f);
             ValueModifier staminaMod = new ValueModifier(0.8f);
+            private PlayerMovement player;
 
             void Start()
             {
-                GetComponent<Entity>().ExternalActivity.moveMods.Add(speedMod);
+                player = GetComponent<PlayerMovement>();
+                player.Entity.ExternalActivity.moveMods.Add(speedMod);
                 if (EndlessForeverPlugin.Instance.GetUpgradeCount("speedyboots") > 1)
-                    GetComponent<PlayerManager>().GetMovementStatModifier().AddModifier("staminaDrop", staminaMod);
+                    player.pm.GetMovementStatModifier().AddModifier("staminaDrop", staminaMod);
             }
 
             public void AddBoot()
@@ -148,8 +150,8 @@ namespace EndlessFloorsForever.Patches
                 bootsActive--;
                 if (bootsActive <= 0)
                 {
-                    GetComponent<Entity>().ExternalActivity.moveMods.Remove(speedMod);
-                    GetComponent<PlayerManager>().GetMovementStatModifier().RemoveModifier(staminaMod);
+                    player.Entity.ExternalActivity.moveMods.Remove(speedMod);
+                    player.pm.GetMovementStatModifier().RemoveModifier(staminaMod);
                     Destroy(this);
                 }
             }
