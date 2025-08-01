@@ -148,7 +148,7 @@ public class InfGameManager : MainGameManager
 
         lvlObj.standardLightColor = Color.Lerp(Color.Lerp(Color.white, coldColor, coldLight), warmColor, warmLight);
 
-        if (currentFD.FloorID % 99 == 0)
+        if ((currentFD.FloorID % 99) == 0)
             lvlObj.standardLightColor = Color.Lerp(lvlObj.standardLightColor, Color.red, 0.3f);
 
         float rgb = Mathf.Max(16f, 255f - (currentFD.FloorID * 5));
@@ -308,14 +308,15 @@ public class InfGameManager : MainGameManager
         lvlObj.timeBonusLimit = 90f * Mathf.Ceil(currentFD.maxSize / 24f);
         lvlObj.timeLimit = (180f * Mathf.Ceil(currentFD.maxSize / 24f)) + (60f * Mathf.Ceil(currentFD.classRoomCount / 3f));
 
-        if (currentFD.FloorID % 99 == 0) // Oh no...
+        if ((currentFD.FloorID % 99) == 0) // Oh no...
             lvlObj.timeLimit = float.PositiveInfinity;
     }
 
     public override void Initialize()
     {
-        levelNo = EndlessForeverPlugin.Instance.gameSave.currentFloor;
-        if (CoreGameManager.Instance.lifeMode != LifeMode.Explorer && levelNo % 99 == 0)
+        if (CoreGameManager.Instance.lastLevelNumber > levelNo) // Help previous version saves able to do field trips.
+            CoreGameManager.Instance.lastLevelNumber = levelNo;
+        if (CoreGameManager.Instance.lifeMode != LifeMode.Explorer && (EndlessForeverPlugin.currentFloorData.FloorID % 99) == 0)
         {
             AccessTools.Field(typeof(MainGameManager), "allNotebooksNotification").SetValue(this, F99AllNotebooks);
             var timeout = FindObjectOfType<TimeOut>();
@@ -351,13 +352,16 @@ public class InfGameManager : MainGameManager
         }
         CoreGameManager.Instance.levelMapHasBeenPurchasedFor = null;
         if ((EndlessForeverPlugin.Instance.gameSave.currentFloor % 8) == 0)
+        {
             CoreGameManager.Instance.tripAvailable = true;
+            CoreGameManager.Instance.tripPlayed = false;
+        }
         base.LoadNextLevel();
     }
 
     protected override void AllNotebooks()
     {
-        if (!allNotebooksFound && CoreGameManager.Instance.lifeMode != LifeMode.Explorer && levelNo % 99 == 0)
+        if (!allNotebooksFound && CoreGameManager.Instance.lifeMode != LifeMode.Explorer && (EndlessForeverPlugin.currentFloorData.FloorID % 99) == 0)
         {
             var outage = FindObjectOfType<TimeOut>();
             AudioManager audMan = AccessTools.DeclaredField(typeof(EnvironmentController), "audMan").GetValue(ec) as AudioManager;

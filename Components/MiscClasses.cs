@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 using System.Runtime.InteropServices.ComTypes;
+using System.Linq;
 
 namespace EndlessFloorsForever.Components
 {
@@ -247,6 +248,20 @@ namespace EndlessFloorsForever.Components
             get
             {
                 return Mathf.Clamp(Mathf.CeilToInt(maxSize / 1.24f), 19, maxSize);
+            }
+        }
+
+        public LevelObject myLevelType
+        {
+            get
+            {
+                if (FloorID <= 4)
+                    return EndlessForeverPlugin.Instance.inflevel.randomizedLevelObject.First(x => x.selection.type == LevelType.Schoolhouse).selection;
+                System.Random cRNG = new System.Random(CoreGameManager.Instance.Seed() + (FloorID - 1));
+                List<WeightedLevelObject> list = new List<WeightedLevelObject>(EndlessForeverPlugin.Instance.inflevel.randomizedLevelObject);
+
+                list.ControlledShuffle(cRNG);
+                return WeightedSelection<LevelObject>.ControlledRandomSelectionList(WeightedLevelObject.Convert(list), cRNG);
             }
         }
     }

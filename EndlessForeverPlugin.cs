@@ -2255,7 +2255,7 @@ public static class PluginInfo
 {
     public const string PLUGIN_GUID = "alexbw145.baldiplus.arcadeendlessforever";
     public const string PLUGIN_NAME = "Arcade Endless Forever";
-    public const string PLUGIN_VERSION = "0.0.2.0";
+    public const string PLUGIN_VERSION = "0.0.3.0";
 }
 
 public struct UpgradeSaveData

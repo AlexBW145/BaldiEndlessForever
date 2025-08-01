@@ -81,6 +81,14 @@ namespace EndlessFloorsForever.Patches
                 environmentTimeScale = 0f,
                 npcTimeScale = 0f
             };
+            foreach (var entity in Entity.allEntities)
+            {
+                if (!entity.gameObject.CompareTag("Player"))
+                {
+                    entity.SetTrigger(false);
+                    entity.SetInteractionState(false);
+                }
+            }
             AudioManager audMan = (AudioManager)_audMan.GetValue(BaseGameManager.Instance.Ec);
             audMan.PlaySingle(EndlessForeverPlugin.arcadeAssets.Get<SoundObject>("TimeSlow"));
             BaseGameManager.Instance.Ec.AddTimeScale(timeMod);
@@ -89,6 +97,14 @@ namespace EndlessFloorsForever.Patches
             {
                 timeToWait -= Time.deltaTime;
                 yield return null;
+            }
+            foreach (var entity in Entity.allEntities)
+            {
+                if (!entity.gameObject.CompareTag("Player"))
+                {
+                    entity.SetTrigger(true);
+                    entity.SetInteractionState(true);
+                }
             }
             BaseGameManager.Instance.Ec.RemoveTimeScale(timeMod);
             audMan.PlaySingle(EndlessForeverPlugin.arcadeAssets.Get<SoundObject>("TimeFast"));

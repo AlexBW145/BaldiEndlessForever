@@ -179,6 +179,25 @@ namespace EndlessFloorsForever.Patches
         }
     }
 
+    [HarmonyPatch(typeof(StoreRoomFunction))]
+    class ShopPatches
+    {
+        static MethodInfo Close = AccessTools.Method(typeof(StoreRoomFunction), "Close");
+        static MethodInfo Open = AccessTools.Method(typeof(StoreRoomFunction), "Open");
+        [HarmonyPatch(nameof(StoreRoomFunction.OnGenerationFinished)), HarmonyPostfix]
+        static void CloseStoreIfPossible(StoreRoomFunction __instance)
+        {
+            if (EndlessForeverPlugin.Instance.InGameMode && __instance.Room.ec.notebookTotal > 4)
+                Close.Invoke(__instance, []);
+        }
+        [HarmonyPatch("Update"), HarmonyPrefix]
+        static void OpenStoreByThat(StoreRoomFunction __instance, ref int ___notebooksAtLastReset, ref int ___notebooksPerReset, ref bool ___open)
+        {
+            if (EndlessForeverPlugin.Instance.InGameMode && !___open && BaseGameManager.Instance.FoundNotebooks - ___notebooksAtLastReset >= ___notebooksPerReset)
+                Open.Invoke(__instance, []);
+        }
+    }
+
     [HarmonyPatch(typeof(Pickup))]
     class PickupPatches
     {

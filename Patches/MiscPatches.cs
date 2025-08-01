@@ -50,12 +50,12 @@ namespace EndlessFloorsForever.Patches
         [HarmonyPatch(typeof(GameInitializer), "GetControlledRandomLevelData"), HarmonyPrefix]
         static bool AlwaysSchoolhouse(ref LevelObject __result)
         {
-            if ((CoreGameManager.Instance.sceneObject != EndlessForeverPlugin.Instance.inflevel && CoreGameManager.Instance.nextLevel != EndlessForeverPlugin.Instance.inflevel) || EndlessForeverPlugin.currentFloorData.FloorID >= 5) return true;
-            __result = CoreGameManager.Instance.sceneObject.randomizedLevelObject[0].selection;
+            if (CoreGameManager.Instance.sceneObject != EndlessForeverPlugin.Instance.inflevel && CoreGameManager.Instance.nextLevel != EndlessForeverPlugin.Instance.inflevel) return true;
+            __result = EndlessForeverPlugin.currentFloorData.myLevelType;
             return false;
         }
     }
-
+#if false
     [HarmonyPatch(typeof(ElevatorScreen), "LoadDelay")]
     class OldShopIsUpgradeShop
     {
@@ -350,4 +350,5 @@ namespace EndlessFloorsForever.Patches
             return false;
         }
     }
+#endif
 }
