@@ -71,6 +71,9 @@ namespace EndlessFloorsForever.Patches
 
         static IEnumerator WaitForCompletion(ITM_AlarmClock clock)
         {
+            int clickablelayer = LayerMask.NameToLayer("ClickableEntities"); // Do not affect them
+            int clickablecollidablelayer = LayerMask.NameToLayer("ClickableCollidableEntities"); // and also them because math balloons.
+            int disabledLayer = LayerMask.NameToLayer("Disabled"); // What in the culling??
             while (!(bool)_finished.GetValue(clock))
             {
                 yield return null;
@@ -83,8 +86,9 @@ namespace EndlessFloorsForever.Patches
             };
             foreach (var entity in Entity.allEntities)
             {
-                if (!entity.gameObject.CompareTag("Player"))
+                if (!entity.gameObject.CompareTag("Player") && entity.gameObject.layer != clickablelayer && entity.gameObject.layer != clickablecollidablelayer && entity.gameObject.layer != disabledLayer)
                 {
+                    entity.SetBlinded(true);
                     entity.SetTrigger(false);
                     entity.SetInteractionState(false);
                 }
@@ -100,8 +104,9 @@ namespace EndlessFloorsForever.Patches
             }
             foreach (var entity in Entity.allEntities)
             {
-                if (!entity.gameObject.CompareTag("Player"))
+                if (!entity.gameObject.CompareTag("Player") && entity.gameObject.layer == disabledLayer)
                 {
+                    entity.SetBlinded(false);
                     entity.SetTrigger(true);
                     entity.SetInteractionState(true);
                 }

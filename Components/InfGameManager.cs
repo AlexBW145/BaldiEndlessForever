@@ -234,7 +234,7 @@ public class InfGameManager : MainGameManager
             facultyRoomGroup.wallTexture = [new WeightedTexture2D() { weight = 100, selection = potentialFSets[SetFVal].Item1 }];
             facultyRoomGroup.ceilingTexture = [new WeightedTexture2D() { weight = 100, selection = potentialFSets[SetFVal].Item2 }];
         }
-        else
+        else if (EndlessForeverPlugin.profFloorTextures.Count > 0 && EndlessForeverPlugin.facultyWallTextures.Count > 0 && EndlessForeverPlugin.ceilTextures.Count > 0)
         {
             facultyRoomGroup.floorTexture = EndlessForeverPlugin.profFloorTextures.ToArray();
             facultyRoomGroup.wallTexture = EndlessForeverPlugin.facultyWallTextures.ToArray();
@@ -254,7 +254,7 @@ public class InfGameManager : MainGameManager
             officeRoomGroup.wallTexture = [new WeightedTexture2D() { weight = 100, selection = potentialFSets[SetFVal].Item1 }];
             officeRoomGroup.ceilingTexture = [new WeightedTexture2D() { weight = 100, selection = potentialFSets[SetFVal].Item2 }];
         }
-        else
+        else if (EndlessForeverPlugin.profFloorTextures.Count > 0 && EndlessForeverPlugin.facultyWallTextures.Count > 0 && EndlessForeverPlugin.ceilTextures.Count > 0)
         {
             officeRoomGroup.floorTexture = EndlessForeverPlugin.profFloorTextures.ToArray();
             officeRoomGroup.wallTexture = EndlessForeverPlugin.facultyWallTextures.ToArray();

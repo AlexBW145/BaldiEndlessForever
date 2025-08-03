@@ -37,6 +37,9 @@ namespace EndlessFloorsForever.Components
         [SerializeField]
         private float baldiStealAnger = 2.5f;
 
+        [SerializeField]
+        private int aidLimit = 100;
+
         private int notebooksAtLastReset;
 
         private int totalCustomers;
@@ -349,6 +352,17 @@ namespace EndlessFloorsForever.Components
 
         private void ItemDenied(Pickup pickup, int player)
         {
+            if (open)
+            {
+                if (pickup != null && !EndlessForeverPlugin.Instance.gameSave.upgradeStoreHelped && pickup.price - CoreGameManager.Instance.GetPoints(0) <= aidLimit)
+                {
+                    pickup.Collect(player);
+                    EndlessForeverPlugin.Instance.gameSave.upgradeStoreHelped = true;
+                    CoreGameManager.Instance.AddPoints(-CoreGameManager.Instance.GetPoints(player), player, playAnimation: true, false);
+                    itemPurchased = true;
+                    playerLeft = false;
+                }
+            }
         }
 
         internal void PurchaseRestock()
@@ -372,20 +386,30 @@ namespace EndlessFloorsForever.Components
         internal void PurchaseMap()
         {
             if (CoreGameManager.Instance.levelMapHasBeenPurchasedFor == CoreGameManager.Instance.nextLevel || CoreGameManager.Instance.saveMapPurchased || !inGameMode || !open) return;
+            bool purchased = false;
             if (CoreGameManager.Instance.GetPoints(0) >= CoreGameManager.Instance.nextLevel.mapPrice)
+            {
+                purchased = true;
+                CoreGameManager.Instance.AddPoints(-CoreGameManager.Instance.nextLevel.mapPrice, 0, true, false);
+            }
+            else if (!CoreGameManager.Instance.johnnyHelped && CoreGameManager.Instance.nextLevel.mapPrice >= 1000 && CoreGameManager.Instance.nextLevel.mapPrice - CoreGameManager.Instance.GetPoints(0) <= 100)
+            {
+                CoreGameManager.Instance.johnnyHelped = true;
+                purchased = true;
+                CoreGameManager.Instance.AddPoints(-CoreGameManager.Instance.GetPoints(0), 0, true, false);
+            }
+
+            if (purchased)
             {
                 CoreGameManager.Instance.levelMapHasBeenPurchasedFor = CoreGameManager.Instance.nextLevel;
                 CoreGameManager.Instance.saveMapPurchased = true;
-                CoreGameManager.Instance.AddPoints(-CoreGameManager.Instance.nextLevel.mapPrice, 0, true, false);
+                
                 CoreGameManager.Instance.audMan.PlaySingle(audBell);
-
                 itemPurchased = true;
                 playerLeft = false;
             }
             else
-            {
                 ItemDenied(null, 0);
-            }
         }
 
         internal void GivenBusPass()

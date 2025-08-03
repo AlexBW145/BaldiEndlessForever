@@ -286,7 +286,7 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
         {
             var endtype = Instantiate(level.selection);
             endtype.name = $"InfLevel_{endtype.type.ToStringExtended()}";
-            endscene.randomizedLevelObject = endscene.randomizedLevelObject.AddToArray(new() { selection = endtype, weight = 25 });
+            endscene.randomizedLevelObject = endscene.randomizedLevelObject.AddToArray(new() { selection = endtype, weight = 50 });
             foreach (var room in endtype.roomGroup)
                 basegameRooms.Add(room.name);
         }
@@ -1358,8 +1358,8 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
         if (!(MTM101BaldiDevAPI.SaveGamesEnabled && CoreGameManager.Instance?.sceneObject == inflevel) || CoreGameManager.Instance?.lifeMode == LifeMode.Explorer) return;
         currentData = new Tuple<int, bool, bool>(
             gameSave.currentFloor > currentData.Item1 ? gameSave.currentFloor : currentData.Item1,
-            currentData.Item2,
-            gameSave.currentFloor == 99 ? true : currentData.Item3);
+            gameSave.currentFloor - 1 == 99 ? true : currentData.Item2,
+            gameSave.currentFloor - 1 == 99 && gameSave.startingFloor == 1 ? true : currentData.Item3);
         ModdedSaveSystem.CallSaveLoadAction(Instance, true, ModdedSaveSystem.GetCurrentSaveFolder(Instance));
     }
 
@@ -2255,7 +2255,7 @@ public static class PluginInfo
 {
     public const string PLUGIN_GUID = "alexbw145.baldiplus.arcadeendlessforever";
     public const string PLUGIN_NAME = "Arcade Endless Forever";
-    public const string PLUGIN_VERSION = "0.0.3.0";
+    public const string PLUGIN_VERSION = "0.0.4.0";
 }
 
 public struct UpgradeSaveData
@@ -2286,6 +2286,7 @@ internal class ArcadeEndlessForeverSave : ModdedSaveGameIOBinary
     }
     public int startingFloor = 1;
     public bool IsInfGamemode = false;
+    public bool upgradeStoreHelped = false;
     public FloorData myFloorData = new FloorData();
     public UpgradeSaveData[] Upgrades = [new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0)];
     public UpgradeSaveData[] inbox = [new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0),
@@ -2301,7 +2302,7 @@ internal class ArcadeEndlessForeverSave : ModdedSaveGameIOBinary
 
     public override void Save(BinaryWriter writer)
     {
-        writer.Write((byte)2); //format version
+        writer.Write((byte)3); //format version
         writer.Write(currentFloor);
         writer.Write(startingFloor);
         writer.Write((byte)Upgrades.Length);
@@ -2326,6 +2327,7 @@ internal class ArcadeEndlessForeverSave : ModdedSaveGameIOBinary
             writer.Write(inbox[i].count);
         }
         writer.Write(IsInfGamemode);
+        writer.Write(upgradeStoreHelped);
     }
 
     public override void Load(BinaryReader reader)
@@ -2346,6 +2348,8 @@ internal class ArcadeEndlessForeverSave : ModdedSaveGameIOBinary
             inbox[i] = new UpgradeSaveData(reader.ReadString(), reader.ReadByte());
         if (version == 1) return;
         IsInfGamemode = reader.ReadBoolean();
+        if (version == 2) return;
+        upgradeStoreHelped = reader.ReadBoolean();
     }
 
     public override void OnCGMCreated(CoreGameManager instance, bool isFromSavedGame)
@@ -2366,6 +2370,7 @@ internal class ArcadeEndlessForeverSave : ModdedSaveGameIOBinary
         savedGrade = 16;
         inbox = [new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0),
     new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0), new UpgradeSaveData("none", 0)];
+        upgradeStoreHelped = false;
     }
 
     // For Upgrades

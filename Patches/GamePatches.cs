@@ -342,8 +342,11 @@ namespace EndlessFloorsForever.Patches
             return false;
         }
 
-        [HarmonyPatch(typeof(Pickup), nameof(Pickup.Clicked)), HarmonyTranspiler]
-        static IEnumerable<CodeInstruction> DoNotContributeToTotals(IEnumerable<CodeInstruction> instructions) // insert calling CheckForEnergy right after the toSteal for loop
+        [HarmonyPatch(typeof(Pickup), nameof(Pickup.Clicked))]
+        [HarmonyPatch(typeof(StoreRoomFunction), nameof(StoreRoomFunction.PurchaseRestock))]
+        [HarmonyPatch(typeof(StoreRoomFunction), "ItemDenied")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> DoNotContributeToTotals(IEnumerable<CodeInstruction> instructions) // Prevent Johnny's Store from contributing to the total ytps collected. (To stop debt)
         {
             bool didFirstFor = false;
             foreach (CodeInstruction instruction in instructions)
@@ -352,7 +355,7 @@ namespace EndlessFloorsForever.Patches
                 {
                     didFirstFor = true;
                     yield return new CodeInstruction(OpCodes.Ldc_I4_0); // false
-                    yield return new CodeInstruction(OpCodes.Callvirt, AccessTools.DeclaredMethod(typeof(CoreGameManager), nameof(CoreGameManager.AddPoints), [typeof(int), typeof(int), typeof(bool), typeof(bool)])); // Patches that function to make sure purchased items does not contributed to total YTPs obtained
+                    yield return new CodeInstruction(OpCodes.Callvirt, AccessTools.DeclaredMethod(typeof(CoreGameManager), nameof(CoreGameManager.AddPoints), [typeof(int), typeof(int), typeof(bool), typeof(bool)])); // Patches that function to make sure purchased items does not contribute to total YTPs obtained
                 }
                 else
                     yield return instruction;

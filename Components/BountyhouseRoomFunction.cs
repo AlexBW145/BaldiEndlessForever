@@ -287,7 +287,7 @@ namespace EndlessFloorsForever.Components
             if (!open)
             {
                 thief = true;
-                CoreGameManager.Instance.johnnyHelped = true;
+                EndlessForeverPlugin.Instance.gameSave.upgradeStoreHelped = true;
                 BaseGameManager.Instance.AngerBaldi(baldiStealAnger);
                 if (!alarmStarted)
                     SetOffAlarm();
