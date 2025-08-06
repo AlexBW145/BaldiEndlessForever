@@ -63,14 +63,15 @@ class MiscPatches
 
 <size=85%>Continuation made by AlexBW145
 F99 Music borrowed from Rapparep
-Restock & Map Fill posters in Upgrade Warehouse shop by B-Side Skid (on Gamebanana)
+Restock & Map Fill posters in Upgrade Warehouse shop plus Upgrade Warehouse designs by B-Side Skid (on Gamebanana)
 New speedy boots upgrade icons by AlexBW145</size>";
         var credits2 = GameObject.Instantiate(__instance.screens[0], null);
         credits2.GetComponentsInChildren<TextMeshProUGUI>()[0].text = @"Texture Sets Included
 
-<size=85%>Deltarune Light World, parts of Corn Maze - Unknown
+<size=85%>Deltarune Light World - Unknown
 B. Carnell-themed sets, Deltarune Dark World idea, Textured With Blocks - AlexBW145
 Ceiling of Corn Maze - Excavator Man
+Wall of Corn Maze - MissingTextureMan101
 Classic Maze - Ripped from that one maze
 Fun House - Ripped from Marcello's Fun House(?)
 </size>";

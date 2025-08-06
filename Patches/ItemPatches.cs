@@ -47,9 +47,10 @@ namespace EndlessFloorsForever.Patches
         }
 
         [HarmonyPatch(typeof(ITM_BSODA), "Use"), HarmonyPrefix]
-        static void SlowBSODAPatch(ITM_BSODA __instance, ref float ___speed)
+        static void SlowBSODAPatch(ITM_BSODA __instance, ref float ___speed, ref float ___time)
         {
             ___speed *= 1f - (EndlessForeverPlugin.Instance.GetUpgradeCount("slowsoda") * 0.15f);
+            ___time += 2f * EndlessForeverPlugin.Instance.GetUpgradeCount("slowsoda");
         }
 
         static FieldInfo _finished = AccessTools.Field(typeof(ITM_AlarmClock), "finished");

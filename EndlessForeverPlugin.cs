@@ -36,14 +36,19 @@ using UnityEngine.UI;
 
 namespace EndlessFloorsForever;
 
-[BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+[BepInPlugin(PLUGIN_GUID, PLUGIN_NAME, PLUGIN_VERSION)]
 [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", "8.1.0.0")]
 [BepInIncompatibility("mtm101.rulerp.baldiplus.endlessfloors")]
 [BepInDependency("alexbw145.baldiplus.pinedebug", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("pixelguy.pixelmodding.baldiplus.custommainmenusapi", BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency("pixelguy.pixelmodding.baldiplus.custommusics", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInProcess("BALDI.exe")]
 public class EndlessForeverPlugin : BaseUnityPlugin
 {
+    internal const string PLUGIN_GUID = "alexbw145.baldiplus.arcadeendlessforever";
+    private const string PLUGIN_NAME = "Arcade Endless Forever";
+    private const string PLUGIN_VERSION = "0.0.4.0";
+
     public static EndlessForeverPlugin Instance { get; private set; }
     public static readonly AssetManager arcadeAssets = new AssetManager();
     public readonly Dictionary<string, Sprite> UpgradeIcons = new Dictionary<string, Sprite>(); // Todo: make this associate with the asset manager??
@@ -88,9 +93,8 @@ public class EndlessForeverPlugin : BaseUnityPlugin
 
     private void Awake()
     {
-        Harmony harmony = new Harmony(PluginInfo.PLUGIN_GUID);
         Instance = this;
-        harmony.PatchAllConditionals();
+        new Harmony(PLUGIN_GUID).PatchAllConditionals();
         Log = Logger;
         forceSets = Config.Bind("Cosmetic Settings", "Force environment textures as sets", false, "Setting this \"true\" will disable randomly picked environment textures and will use environment texture sets instead.");
 
@@ -102,7 +106,7 @@ public class EndlessForeverPlugin : BaseUnityPlugin
 #if RELEASE
         MTM101BaldiDevAPI.AddWarningScreen(@"This build of Infinite Floors Forever is unfinished,
 meaning that everything is subject to change!
-Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
+Current pre-release version: " + PLUGIN_VERSION, false);
 #endif
     }
 
@@ -299,6 +303,7 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
         endscene.forcedNpcs = [];
         endscene.potentialNPCs = [];
         endscene.shopItems = [];
+        endscene.AddMeta(this, ["arcade"]);
         GeneratorManagement.EnqueueGeneratorChanges(endscene);
         InfGameManager manager = new MainGameManagerBuilder<InfGameManager>()
             .SetCustomPitstop(InfPitstop)
@@ -387,6 +392,8 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
         if (Chainloader.PluginInfos.ContainsKey("pixelguy.pixelmodding.baldiplus.custommainmenusapi"))
             CustomMainMenuSupport.InitSupport();
         AssetLoader.LocalizationFromMod(this);
+        FloorPick.sliding = Resources.FindObjectsOfTypeAll<SoundObject>().Last(x => x.name == "Slap");
+        FloorPick.slideDone = Resources.FindObjectsOfTypeAll<SoundObject>().Last(x => x.name == "TapeInsert");
         arcadeAssets.Add("F99Finale", AssetLoader.MidiFromMod("99start", this, "Midi", "TimeOut_F99.mid"));
         arcadeAssets.AddRange([AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Tubes4.png"), 1f), AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Tubes5.png"), 1f), AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Tubes6.png"), 1f)], ["LifeTubes4", "LifeTubes5", "LifeTubes6"]);
         arcadeAssets.Add("TimeSlow", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Effects", "TimeSlow.wav"), "Sfx_TimeSlow", SoundType.Effect, Color.blue));
@@ -443,6 +450,10 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
                 ]);
 
         var placeholdcardboard = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 28f, "PlaceholdShopkeeper.png");
+        var placeholdPoster = new PosterObject()
+        {
+            baseTexture = AssetLoader.TextureFromMod(this, "unfinishednotice.png"),
+        };
         arcadeAssets.Add("PlaceholdShopkeeper", placeholdcardboard);
         // Upgrade Warehouse Storekeeper (The Store where when you purchase upgrades, it'll go into your inbox from the Pitstop.
         arcadeAssets.AddRange<Texture2D>([
@@ -495,11 +506,14 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
         volumeanim.audioSource = spriteanimator.GetComponent<AudioSource>();
         spriteanimator.spriteRenderer = spriteanimator.GetComponent<SpriteRenderer>();
         spriteanimator.gameObject.SetActive(false);
-        volumeanim.GetComponent<SpriteRenderer>().sprite = placeholdcardboard;
+        volumeanim.GetComponent<SpriteRenderer>().sprite = AssetLoader.SpriteFromMod(this, Vector2.one/2f, 28f, "UpgradeWares", "Juan_Base.png");
         volumeanim.enabled = false;
         var hotspot = Instantiate(storeroombase.Find("JohnnyHotspot"), roombase.transform, true);
         shopcontainer.GetComponent<UpgradeWarehouseRoomFunction>().johnnyHotspot = hotspot;
         Instantiate(storeroombase.Find("CashRegister"), roombase.transform, true);
+
+        var ceilContainerWarehouse = Instantiate(Resources.FindObjectsOfTypeAll<GameObject>().Last(x => x.name == "JohnnySign"), MTM101BaldiDevAPI.prefabTransform, true);
+        ceilContainerWarehouse.GetComponent<SpriteRenderer>().sprite = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 28f, "UpgradeWares", "WarehouseHangars.png");
 
         var button = Instantiate(storeroombase.Find("GameButton_1"), new Vector3(65f, 0f, 35f), Quaternion.Euler(0f, 90f, 0f), roombase.transform);
         button = Instantiate(storeroombase.Find("GameButton_1"), new Vector3(65f, 0f, 25f), Quaternion.Euler(0f, 90f, 0f), roombase.transform);
@@ -579,6 +593,10 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
                         rotation = warehouse.basicObjects[i].rotation,
                         replaceable = true
                     });
+                    break;
+                default:
+                    if (warehouse.basicObjects[i].prefab.name == "JohnnySign")
+                        warehouse.basicObjects[i].prefab = ceilContainerWarehouse.transform;
                     break;
             }
         }
@@ -805,6 +823,9 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
         register.localRotation = Quaternion.Euler(0f, 90f, 0f);
         register.localPosition = new Vector3(60.6f, register.localPosition.y, 27.5f);
 
+        var ceilContainerBountyhouse = Instantiate(Resources.FindObjectsOfTypeAll<GameObject>().Last(x => x.name == "JohnnySign"), MTM101BaldiDevAPI.prefabTransform, true);
+        ceilContainerBountyhouse.GetComponent<SpriteRenderer>().sprite = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 28f, "BountyHouse", "BountyhouseHangars.png");
+
         var bountyhouse = Instantiate(storeRoom);
         bountyhouse.name = "Room_ItemBountyhouse";
         bountyhouse.roomFunctionContainer = shopcontainer.GetComponent<RoomFunctionContainer>();
@@ -862,6 +883,7 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
                     break;
                 case 10:
                     bountyhouse.basicObjects[i].position = new Vector3(bountyhouse.basicObjects[i].position.x - 10f, bountyhouse.basicObjects[i].position.y, bountyhouse.basicObjects[i].position.z);
+                    bountyhouse.basicObjects[i].prefab = ceilContainerBountyhouse.transform;
                     break;
                 case 11:
                     bountyhouse.basicObjects.Add(new BasicObjectData()
@@ -871,6 +893,10 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
                         rotation = bountyhouse.basicObjects[i].rotation,
                         replaceable = true
                     });
+                    break;
+                default:
+                    if (bountyhouse.basicObjects[i].prefab.name == "JohnnySign")
+                        bountyhouse.basicObjects[i].prefab = ceilContainerBountyhouse.transform;
                     break;
             }
         }
@@ -1014,6 +1040,18 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
         bountyhouse.windowChance = 0f;
         bountyhouse.doorMats = Resources.FindObjectsOfTypeAll<StandardDoorMats>().Last(x => x.name == "DefaultDoorSet"); // Placeholder for now...
 
+        warehouse.posterDatas.Add(new PosterData()
+        {
+            poster = placeholdPoster,
+            direction = Direction.West,
+            position = new(0, 3)
+        });
+        bountyhouse.posterDatas.Add(new PosterData()
+        {
+            poster = placeholdPoster,
+            direction = Direction.East,
+            position = new(5, 3)
+        });
 
         var roomgrp = new List<RoomGroup>();
         var store = new RoomGroup();
@@ -1365,6 +1403,9 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
 
     internal void ExtendGenData(GeneratorData genData)
     {
+        var alllevels = SceneObjectMetaStorage.Instance.FindAll(x => x.value != inflevel && ((x.title == "F1" && x.number == 0) || (x.title == "F2" && x.number == 1) || (x.title == "F3" && x.number == 2)
+        || (x.title == "F4" && x.number == 3) || (x.title == "F5" && x.number == 4)));
+        var schoolhouselevels = SceneObjectMetaStorage.Instance.FindAll(x => x.value != inflevel && ((x.title == "F1" && x.number == 0) || (x.title == "F2" && x.number == 1) || (x.title == "F3" && x.number == 2)));
         NPCMetaStorage npcs = MTM101BaldiDevAPI.npcMetadata;
         genData.npcs.AddRange([
             new WeightedNPC() {
@@ -1413,6 +1454,14 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
             },
         ]);
         genData.forcedNpcs.Add(npcs.Get(Character.Principal).value);
+        Dictionary<NPC, WeightedNPC> othrNPCs = new Dictionary<NPC, WeightedNPC>();
+        foreach (var npc in alllevels.SelectMany(x => x.value.potentialNPCs))
+        {
+            if (!othrNPCs.ContainsKey(npc.selection) && !genData.npcs.Exists(x => x.selection == npc.selection))
+                othrNPCs.Add(npc.selection, npc);
+        }
+        genData.npcs.AddRange(othrNPCs.Values);
+        genData.forcedNpcs.AddRange(alllevels.SelectMany(x => x.value.forcedNpcs).Where(x => !genData.forcedNpcs.Contains(x)));
         RandomEventMetaStorage rngs = MTM101BaldiDevAPI.randomEventStorage;
         genData.randomEvents.AddRange([
             new WeightedRandomEvent()
@@ -1451,6 +1500,13 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
                 weight = 50
             }
         ]);
+        Dictionary<RandomEvent, WeightedRandomEvent> events = new Dictionary<RandomEvent, WeightedRandomEvent>();
+        foreach (var otherevent in alllevels.SelectMany(x => x.value.GetCustomLevelObjects()).SelectMany(x => x.randomEvents))
+        {
+            if (!events.ContainsKey(otherevent.selection) && !genData.randomEvents.Exists(x => x.selection == otherevent.selection))
+                events.Add(otherevent.selection, otherevent);
+        }
+        genData.randomEvents.AddRange(events.Values);
         foreach (var room in Resources.FindObjectsOfTypeAll<RoomAsset>().Where(rm => rm.category == RoomCategory.Class))
             genData.classRoomAssets.Add(new()
             {
@@ -1467,7 +1523,14 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
         switch (genData.lvlObj.type)
         {
             case LevelType.Schoolhouse:
-                genData.specialRoomAssets.AddRange([
+                Dictionary<RoomAsset, WeightedRoomAsset> assets = new Dictionary<RoomAsset, WeightedRoomAsset>();
+                foreach (var asset in schoolhouselevels
+                    .Select(x => x.value).SelectMany(x => x.GetCustomLevelObjects()).Where(x => x.type == LevelType.Schoolhouse).Select(x => x.potentialSpecialRooms).SelectMany(x => x))
+                {
+                    if (!assets.ContainsKey(asset.selection))
+                        assets.Add(asset.selection, asset);
+                }
+                genData.specialRoomAssets.AddRange(assets.Values/*[
             new WeightedRoomAsset()
             {
                 weight = 190,
@@ -1523,7 +1586,7 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
                 weight = 200,
                 selection = rooms.Last(rm => rm.name == "Playground_3")
             }
-        ]);
+        ]*/);
                 break;
             case LevelType.Laboratory or LevelType.Factory:
                 if (currentFloorData.minSize < 74 || currentFloorData.maxSize < 74) break; // Avoiding interruptions towards forced special rooms.
@@ -1712,6 +1775,13 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
                 weight = 80
             }
         ]);
+        Dictionary<ItemObject, WeightedItemObject> itms = new Dictionary<ItemObject, WeightedItemObject>();
+        foreach (var item in alllevels.SelectMany(x => x.value.GetCustomLevelObjects()).SelectMany(x => x.potentialItems))
+        {
+            if (!itms.ContainsKey(item.selection) && !genData.items.Exists(x => x.selection == item.selection))
+                itms.Add(item.selection, item);
+        }
+        genData.items.AddRange(itms.Values);
         genData.hallInsertions.AddRange([
             new WeightedRoomAsset()
             {
@@ -1729,6 +1799,27 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
                 selection = rooms.Last(rm => rm.name == "HallFormation_2")
             }
         ]);
+        Dictionary<RoomAsset, WeightedRoomAsset> hallinserts = new Dictionary<RoomAsset, WeightedRoomAsset>();
+        foreach (var hall in alllevels.SelectMany(x => x.value.GetCustomLevelObjects()).SelectMany(x => x.potentialPrePlotSpecialHalls))
+        {
+            if (!hallinserts.ContainsKey(hall.selection) && !genData.hallInsertions.Exists(x => x.selection == hall.selection))
+                hallinserts.Add(hall.selection, hall);
+        }
+        genData.potentialObjectBuilders = [.. genData.lvlObj.potentialStructures];
+        foreach (var structure in alllevels.SelectMany(x => x.value.GetCustomLevelObjects()).Where(x => x.type == genData.lvlObj.type).SelectMany(x => x.potentialStructures))
+        {
+            if (!genData.potentialObjectBuilders.Exists(x => x.selection.prefab == structure.selection.prefab) || 
+                (structure.selection.prefab is Structure_EnvironmentObjectPlacer && !genData.potentialObjectBuilders.Contains(structure) && !genData.potentialObjectBuilders.Exists(x => x.selection.parameters?.prefab?.ToList().Exists(pre => structure.selection.parameters?.prefab?.ToList().Exists(a => a.selection == pre.selection) == true) == true)))
+                genData.potentialObjectBuilders.Add(structure);
+        }
+        genData.forcedObjectBuilders = [.. genData.lvlObj.forcedStructures];
+        foreach (var structure in alllevels.SelectMany(x => x.value.GetCustomLevelObjects()).Where(x => x.type == genData.lvlObj.type).SelectMany(x => x.forcedStructures))
+        {
+            if (!genData.forcedObjectBuilders.Exists(x => x.prefab == structure.prefab) || 
+                (structure.prefab is Structure_EnvironmentObjectPlacer && !genData.forcedObjectBuilders.Contains(structure) && !genData.forcedObjectBuilders.Exists(x => x.parameters?.prefab?.ToList().Exists(pre => structure.parameters?.prefab?.ToList().Exists(a => a.selection == pre.selection) == true) == true)))
+                genData.forcedObjectBuilders.Add(structure);
+        }
+        genData.hallInsertions.AddRange(hallinserts.Values);
         foreach (KeyValuePair<BepInEx.PluginInfo, Action<GeneratorData>> kvp in genActions)
         {
             try
@@ -1741,521 +1832,6 @@ Current pre-release version: " + PluginInfo.PLUGIN_VERSION, false);
             }
         }
     }
-
-    /*internal void ExtendGenData(GeneratorData genData) // This isn't a rewrite tho...
-    {
-        NPCMetaStorage npcs = MTM101BaldiDevAPI.npcMetadata;
-        WeightedStructureWithParameters[] objs = Resources.FindObjectsOfTypeAll<LevelObject>().ToList().Find(x => x.name == "Main3").potentialStructures; // Damn you, forgot to add in the meta storage for the overhauled builders?
-        StructureWithParameters[] forcedobjs = Resources.FindObjectsOfTypeAll<LevelObject>().ToList().Find(x => x.name == "Main3").forcedStructures;
-        RandomEventMetaStorage rngs = MTM101BaldiDevAPI.randomEventStorage;
-        ItemMetaStorage items = MTM101BaldiDevAPI.itemMetadata;
-        genData.npcs.AddRange(new WeightedNPC[]
-        {
-            new WeightedNPC() {
-                weight = 90,
-                selection = npcs.Get(Character.Playtime).value
-            },
-            new WeightedNPC() {
-                weight = 100,
-                selection = npcs.Get(Character.Sweep).value
-            },
-            new WeightedNPC() {
-                weight = 110,
-                selection = npcs.Get(Character.Beans).value
-            },
-            new WeightedNPC() {
-                weight = 85,
-                selection = npcs.Get(Character.Bully).value
-            },
-            new WeightedNPC() {
-                weight = 80,
-                selection = npcs.Get(Character.Crafters).value
-            },
-            new WeightedNPC() {
-                weight = 80,
-                selection = npcs.Get(Character.Chalkles).value
-            },
-            new WeightedNPC() {
-                weight = 10,
-                selection = npcs.Get(Character.LookAt).value
-            },
-            new WeightedNPC() {
-                weight = 90,
-                selection = npcs.Get(Character.Pomp).value
-            },
-            new WeightedNPC() {
-                weight = 95,
-                selection = npcs.Get(Character.Cumulo).value
-            },
-            new WeightedNPC() {
-                weight = 70,
-                selection = npcs.Get(Character.Prize).value
-            },
-            new WeightedNPC() {
-                weight = 90,
-                selection = npcs.Get(Character.DrReflex).value
-            },
-        });
-        genData.forcedNpcs.Add(npcs.Get(Character.Principal).value);
-        genData.classRoomAssets.AddRange(new WeightedRoomAsset[]
-        {
-            new WeightedRoomAsset() {
-                weight = 75,
-                selection = rooms.Get(RoomCategory.Class, "Room_Class_NoActivity_0").value
-            },
-            new WeightedRoomAsset() {
-                weight = 75,
-                selection = rooms.Get(RoomCategory.Class, "Room_Class_NoActivity_1").value
-            },
-            new WeightedRoomAsset() {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Class, "Room_Class_NoActivity_3").value
-            },
-            new WeightedRoomAsset() {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Class, "Room_Class_NoActivity_4").value
-            },
-            new WeightedRoomAsset() {
-                weight = 75,
-                selection = rooms.Get(RoomCategory.Class, "Room_Class_MathMachine_0").value
-            },
-            new WeightedRoomAsset() {
-                weight = 75,
-                selection = rooms.Get(RoomCategory.Class, "Room_Class_MathMachine_1").value
-            },
-            new WeightedRoomAsset() {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Class, "Room_Class_MathMachine_2").value
-            },
-            new WeightedRoomAsset() {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Class, "Room_Class_MathMachine_3").value
-            },
-            new WeightedRoomAsset() {
-                weight = 50,
-                selection = rooms.Get(RoomCategory.Class, "Room_Class_MathMachine_4").value
-            }
-        });
-        genData.facultyRoomAssets.AddRange(new WeightedRoomAsset[]
-        {
-            new WeightedRoomAsset() {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_2").value
-            },
-            new WeightedRoomAsset() {
-                weight = 50,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_6").value
-            },
-            new WeightedRoomAsset() {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_7").value
-            },
-            new WeightedRoomAsset() {
-                weight = 50,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_9").value
-            },
-            new WeightedRoomAsset() {
-                weight = 50,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_11").value
-            },
-            new WeightedRoomAsset() {
-                weight = 25,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_0").value
-            },
-            new WeightedRoomAsset() {
-                weight = 50,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_3").value
-            },
-            new WeightedRoomAsset() {
-                weight = 50,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_4").value
-            },
-            new WeightedRoomAsset() {
-                weight = 25,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_5").value
-            },
-            new WeightedRoomAsset() {
-                weight = 75,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_6").value
-            },
-            new WeightedRoomAsset() {
-                weight = 10,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_8").value
-            },
-            new WeightedRoomAsset() {
-                weight = 75,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_10").value
-            },
-            new WeightedRoomAsset() {
-                weight = 10,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_12").value
-            },
-            new WeightedRoomAsset() {
-                weight = 10,
-                selection = rooms.Get(RoomCategory.Faculty, "Room_Faculty_School_1").value
-            },
-        });
-        genData.randomEvents.AddRange(new WeightedRandomEvent[]
-        {
-            new WeightedRandomEvent()
-            {
-                selection = rngs.Get(RandomEventType.Fog).value,
-                weight = 150
-            },
-            new WeightedRandomEvent()
-            {
-                selection = rngs.Get(RandomEventType.Party).value,
-                weight = 125
-            },
-            new WeightedRandomEvent()
-            {
-                selection = rngs.Get(RandomEventType.Snap).value,
-                weight = 70
-            },
-            new WeightedRandomEvent()
-            {
-                selection = rngs.Get(RandomEventType.Flood).value,
-                weight = 90
-            },
-            new WeightedRandomEvent()
-            {
-                selection = rngs.Get(RandomEventType.Lockdown).value,
-                weight = 65
-            },
-            new WeightedRandomEvent()
-            {
-                selection = rngs.Get(RandomEventType.Gravity).value,
-                weight = 55
-            },
-            new WeightedRandomEvent()
-            {
-                selection = rngs.Get(RandomEventType.MysteryRoom).value,
-                weight = 50
-            }
-        });
-        genData.items.AddRange(new WeightedItemObject[]
-        {
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Quarter).value,
-                weight = 100
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.AlarmClock).value,
-                weight = 76
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Apple).value,
-                weight = 2
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Boots).value,
-                weight = 75
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.ChalkEraser).value,
-                weight = 100
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.DetentionKey).value,
-                weight = 60
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.GrapplingHook).value,
-                weight = 45
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Nametag).value,
-                weight = 65
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Wd40).value,
-                weight = 80
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.PortalPoster).value,
-                weight = 40
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.PrincipalWhistle).value,
-                weight = 70
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Scissors).value,
-                weight = 100
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.DoorLock).value,
-                weight = 62
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Tape).value,
-                weight = 60
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Teleporter).value,
-                weight = 20
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.ZestyBar).value,
-                weight = 90
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.DietBsoda).value,
-                weight = 52
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Bsoda).value,
-                weight = 10
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.NanaPeel).value,
-                weight = 85
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Points).value,
-                weight = 5
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Points).itemObjects[1],
-                weight = 10
-            },
-            new WeightedItemObject()
-            {
-                selection = items.FindByEnum(Items.Points).itemObjects[0],
-                weight = 15
-            },
-        });
-        genData.specialRoomAssets.AddRange(new WeightedRoomAsset[] {
-            new WeightedRoomAsset()
-            {
-                weight = 190,
-                selection = rooms.Get(RoomCategory.Special, "Room_Cafeteria_1").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 190,
-                selection = rooms.Get(RoomCategory.Special, "Room_Cafeteria_2").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 190,
-                selection = rooms.Get(RoomCategory.Special, "Room_Cafeteria_3").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 115,
-                selection = rooms.Get(RoomCategory.Special, "Room_Cafeteria_Hard_1").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 115,
-                selection = rooms.Get(RoomCategory.Special, "Room_Cafeteria_Hard_2").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 200,
-                selection = rooms.Get(RoomCategory.Special, "Room_Library_1").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 200,
-                selection = rooms.Get(RoomCategory.Special, "Room_Library_2").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 200,
-                selection = rooms.Get(RoomCategory.Special, "Room_Library_3").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 200,
-                selection = rooms.Get(RoomCategory.Special, "Room_Playground_1").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 200,
-                selection = rooms.Get(RoomCategory.Special, "Room_Playground_2").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 200,
-                selection = rooms.Get(RoomCategory.Special, "Room_Playground_3").value
-            }
-        });
-        genData.officeRoomAssets.AddRange(new WeightedRoomAsset[] {
-            new WeightedRoomAsset()
-            {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Office, "Room_Office_0").value
-            }
-        });
-        genData.hallInsertions.AddRange(new WeightedRoomAsset[] {
-            new WeightedRoomAsset()
-            {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Hall, "Room_HallFormation_0").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Hall, "Room_HallFormation_1").value
-            },
-            new WeightedRoomAsset()
-            {
-                weight = 100,
-                selection = rooms.Get(RoomCategory.Hall, "Room_HallFormation_2").value
-            }
-        });
-        genData.forcedObjectBuilders.AddRange([
-            new StructureWithParameters()
-            {
-                parameters = new StructureParameters()
-                {
-                    chance = [0.02f],
-                    minMax = [new(15,25), new(15,40)],
-                    prefab = []
-                },
-                prefab = Resources.FindObjectsOfTypeAll<Structure_Lockers>().First()
-            },
-            new StructureWithParameters()
-            {
-                parameters = new StructureParameters()
-                {
-                    chance = [0.4f],
-                    minMax = [new(5,0)],
-                    prefab = [new WeightedGameObject()
-                    {
-                        weight = 100,
-                        selection = Resources.FindObjectsOfTypeAll<SwingDoor>().Last(x => x.name == "Door_Swinging").gameObject
-                    },
-                    new WeightedGameObject()
-                    {
-                        weight = 10,
-                        selection = Resources.FindObjectsOfTypeAll<CoinDoor>().Last().gameObject
-                    },
-                    new WeightedGameObject()
-                    {
-                        weight = 10,
-                        selection = Resources.FindObjectsOfTypeAll<Door_SwingingOneWay>().Last().gameObject
-                    }]
-                },
-                prefab = Resources.FindObjectsOfTypeAll<Structure_HallDoor>().First(x => !(bool)x.ReflectionGetVariable("generateButton"))
-            },
-            new StructureWithParameters()
-            {
-                parameters = new StructureParameters()
-                {
-                    chance = [0.1f],
-                    minMax = [new(1,3)],
-                    prefab = forcedobjs[2].parameters.prefab.Clone() as WeightedGameObject[]
-                },
-                prefab = Resources.FindObjectsOfTypeAll<Structure_EnvironmentObjectPlacer>().First(x => x.gameObject.name == "Structure_EnvironmentObjectBuilder_Weighted")
-            },
-            new StructureWithParameters()
-            {
-                parameters = new StructureParameters()
-                {
-                    chance = [0f],
-                    minMax = [new(1,1), new(3,6), new(16,24)],
-                    prefab = forcedobjs[3].parameters.prefab.Clone() as WeightedGameObject[]
-                },
-                prefab = Resources.FindObjectsOfTypeAll<Structure_EnvironmentObjectPlacer>().First(x => x.gameObject.name == "Structure_EnvironmentObjectBuilder_Individual")
-            },
-            new StructureWithParameters()
-            {
-                parameters = new StructureParameters()
-                {
-                    chance = [1f],
-                    minMax = [new(0,2)],
-                    prefab = forcedobjs[4].parameters.prefab.Clone() as WeightedGameObject[]
-                },
-                prefab = Resources.FindObjectsOfTypeAll<Structure_EnvironmentObjectPlacer>().First(x => x.gameObject.name == "Structure_EnvironmentObjectBuilder_Individual")
-            }
-            ]);
-        genData.potentialObjectBuilders.AddRange([
-            new WeightedStructureWithParameters()
-            {
-                weight = 100,
-                selection = new StructureWithParameters()
-                {
-                    parameters = new StructureParameters()
-                    {
-                        chance = [],
-                        minMax = [new(3,5), new(2,5), new(25,0)],
-                        prefab = []
-                    },
-                    prefab = Resources.FindObjectsOfTypeAll<Structure_Vent>().First()
-                }
-            },
-            new WeightedStructureWithParameters()
-            {
-                weight = 100,
-                selection = new StructureWithParameters()
-                {
-                    parameters = new StructureParameters()
-                    {
-                        chance = [0.5f],
-                        minMax = [new(3,6), new(3,6)],
-                        prefab = []
-                    },
-                    prefab = Resources.FindObjectsOfTypeAll<Structure_HallDoor>().First(x => (bool)x.ReflectionGetVariable("generateButton"))
-                }
-            },
-            new WeightedStructureWithParameters()
-            {
-                weight = 100,
-                selection = new StructureWithParameters()
-                {
-                    parameters = new StructureParameters()
-                    {
-                        chance = [],
-                        minMax = [new(1,1), new(0,6)],
-                        prefab = []
-                    },
-                    prefab = Resources.FindObjectsOfTypeAll<Structure_Rotohalls>().First()
-                }
-            }
-            ]);
-        foreach (KeyValuePair<BepInEx.PluginInfo, Action<GeneratorData>> kvp in genActions)
-        {
-            try
-            {
-                kvp.Value.Invoke(genData);
-            }
-            catch (Exception e)
-            {
-                MTM101BaldiDevAPI.CauseCrash(kvp.Key, e);
-            }
-        }
-    }*/
-}
-
-public static class PluginInfo
-{
-    public const string PLUGIN_GUID = "alexbw145.baldiplus.arcadeendlessforever";
-    public const string PLUGIN_NAME = "Arcade Endless Forever";
-    public const string PLUGIN_VERSION = "0.0.4.0";
 }
 
 public struct UpgradeSaveData

@@ -29,7 +29,7 @@ namespace EndlessFloorsForever.Patches
             GameObject.Destroy(floor.gameObject.GetComponent<SeedInput>());
             floor.AddComponent<FloorPick>();
             floor.GetComponent<StandardMenuButton>().OnPress = new UnityEvent();
-            floor.GetComponent<StandardMenuButton>().OnPress.AddListener(() => floor.GetComponent<FloorPick>().Increment());
+            floor.GetComponent<StandardMenuButton>().OnPress.AddListener(() => floor.GetComponent<FloorPick>().StartSliding());
 
             //var thedupe = GameObject.Instantiate(RectTransform.FindObjectsOfType<RectTransform>(true).ToList().Find(x => x.name == "PickEndlessMap"));
             var theman = RectTransform.FindObjectsOfType<RectTransform>(true).First(x => x.name == "MainNew");
@@ -50,7 +50,7 @@ namespace EndlessFloorsForever.Patches
                 EndlessForeverPlugin.Instance.gameSave.startingFloor = curF.floorNum;
                 InfGameManager.UpdateData();
                 ModdedFileManager.Instance.DeleteSavedGame();
-                GameLoader gl = Resources.FindObjectsOfTypeAll<GameLoader>().First();
+                GameLoader gl = GameObject.FindObjectsOfType<GameLoader>(true).First(x => x.gameObject.name == "GameLoader" && x.gameObject.scene.name == "MainMenu");
                 gl.gameObject.SetActive(true);
                 butt.transform.parent.gameObject.SetActive(false);
                 warning.SetActive(false);
@@ -159,7 +159,7 @@ namespace EndlessFloorsForever.Patches
                             InfGameManager.UpdateData();
 
                             ModdedFileManager.Instance.DeleteSavedGame();
-                            GameLoader gl = Resources.FindObjectsOfTypeAll<GameLoader>().First();
+                            GameLoader gl = GameObject.FindObjectsOfType<GameLoader>(true).First(x => x.gameObject.name == "GameLoader" && x.gameObject.scene.name == "MainMenu");
                             gl.gameObject.SetActive(true);
                             newgame.transform.parent.gameObject.SetActive(false);
                             gl.CheckSeed();

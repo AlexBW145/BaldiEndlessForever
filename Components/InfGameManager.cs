@@ -39,9 +39,9 @@ public class InfGameManager : MainGameManager
 
         // Standard Stuff
         lvlObj.potentialItems = genData.items.ToArray();
-        sceneObj.shopItems = genData.items.Where(item => item.selection.price > 0 && item.selection.itemType != Items.Points && item.selection.price < int.MaxValue).ToArray();
+        sceneObj.shopItems = genData.items.Where(item => item.selection.price > 0 && item.selection.addToInventory && item.selection.itemType != Items.Points && item.selection.price < int.MaxValue).ToArray();
         sceneObj.totalShopItems = Mathf.Clamp(Mathf.FloorToInt(currentFD.FloorID / 3) + 3, 3, 12);
-        lvlObj.shopItems = genData.items.Where(item => item.selection.price > 0 && item.selection.itemType != Items.Points && item.selection.price < int.MaxValue).ToArray();
+        lvlObj.shopItems = sceneObj.shopItems;
         lvlObj.totalShopItems = sceneObj.totalShopItems;
         lvlObj.forcedItems = ((currentFD.FloorID % 8) == 0) ? [ItemMetaStorage.Instance.FindByEnum(Items.BusPass).value] : [];
         lvlObj.maxItemValue = currentFD.maxItemValue;
@@ -88,8 +88,8 @@ public class InfGameManager : MainGameManager
         lvlObj.maxHallsToRemove = Mathf.Min(currentFD.FloorID / 2, 6);
         lvlObj.minHallsToRemove = Mathf.Max(lvlObj.maxHallsToRemove - 3, 0);
 
-        lvlObj.forcedStructures = lvlObj.forcedStructures.AddRangeToArray(genData.forcedObjectBuilders.ToArray());
-        lvlObj.potentialStructures = lvlObj.potentialStructures.AddRangeToArray(genData.potentialObjectBuilders.ToArray());
+        lvlObj.forcedStructures = genData.forcedObjectBuilders.ToArray();
+        lvlObj.potentialStructures = genData.potentialObjectBuilders.ToArray();
 
 
         lvlObj.maxSpecialBuilders = Mathf.Min(Mathf.FloorToInt(currentFD.maxSize / 24f), lvlObj.potentialStructures.Length);
