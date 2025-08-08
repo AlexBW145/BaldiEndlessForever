@@ -47,7 +47,7 @@ public class EndlessForeverPlugin : BaseUnityPlugin
 {
     internal const string PLUGIN_GUID = "alexbw145.baldiplus.arcadeendlessforever";
     private const string PLUGIN_NAME = "Arcade Endless Forever";
-    private const string PLUGIN_VERSION = "0.0.4.0";
+    private const string PLUGIN_VERSION = "0.0.6.0";
 
     public static EndlessForeverPlugin Instance { get; private set; }
     public static readonly AssetManager arcadeAssets = new AssetManager();
@@ -67,6 +67,12 @@ public class EndlessForeverPlugin : BaseUnityPlugin
     internal SceneObject InfPitstop { get; private set; }
 
     internal static readonly Dictionary<BepInEx.PluginInfo, Action<GeneratorData>> genActions = new Dictionary<BepInEx.PluginInfo, Action<GeneratorData>>();
+    internal static readonly Dictionary<ArcadeParameterOrder, Dictionary<BepInEx.PluginInfo, Action<CustomLevelGenerationParameters, System.Random>>> managerActions = new Dictionary<ArcadeParameterOrder, Dictionary<BepInEx.PluginInfo, Action<CustomLevelGenerationParameters, System.Random>>>()
+    {
+        { ArcadeParameterOrder.Structures, new Dictionary<PluginInfo, Action<CustomLevelGenerationParameters, System.Random>>() },
+        { ArcadeParameterOrder.Rooms, new Dictionary<PluginInfo, Action<CustomLevelGenerationParameters, System.Random>>() },
+        { ArcadeParameterOrder.Post, new Dictionary<PluginInfo,Action<CustomLevelGenerationParameters, System.Random>>() }
+    };
     internal static readonly HashSet<string> basegameRooms = new HashSet<string>();
     public static FloorData currentFloorData => Instance.gameSave.myFloorData;
 
@@ -86,6 +92,13 @@ public class EndlessForeverPlugin : BaseUnityPlugin
         if (genActions.ContainsKey(info))
             throw new Exception("Can't add already existing generator action!");
         genActions.Add(info, data);
+    }
+
+    public static void AddParameterAction(BepInEx.PluginInfo info, ArcadeParameterOrder order, Action<CustomLevelGenerationParameters, System.Random> data)
+    {
+        if (managerActions[order].ContainsKey(info))
+            throw new Exception("Can't add already existing generator action!");
+        managerActions[order].Add(info, data);
     }
 
     public void AddFieldTrip(WeightedFieldTrip fieldtrip) => fieldTrips.Add(fieldtrip);
@@ -214,7 +227,7 @@ Current pre-release version: " + PLUGIN_VERSION, false);
                 }
         });
         NPCMetaStorage.Instance.Get(Character.Crafters).tags.Add("infarcade_favoritisminvulnerable");
-        NPCMetaStorage.Instance.FindAll(x => x.value.GetType().Equals(typeof(Principal))).Do(npc => npc.tags.Add("infarcade_favoritisminvulnerable"));
+        NPCMetaStorage.Instance.FindAll(x => x.value.GetType().Equals(typeof(Principal)) || x.value.GetType().IsSubclassOf(typeof(Principal))).Do(npc => npc.tags.Add("infarcade_favoritisminvulnerable"));
         yield return "Getting compats...";
         if (Chainloader.PluginInfos.ContainsKey("alexbw145.baldiplus.pinedebug"))
             yield return PineDebugSupport.PineDebugStuff();
@@ -259,19 +272,6 @@ Current pre-release version: " + PLUGIN_VERSION, false);
                 }
             }
         }
-
-        AssetLoader.LocalizationFromFunction((lang) =>
-        {
-            return new Dictionary<string, string>()
-            {
-                { "Level_Arcade", "Level INF" },
-                { "But_NewGameINFPlus", "Start New Game+" },
-                { "Men_NewGameINFPlusDesc", "A fresh restart for a new endless run!\nStart back in F1 with your upgrades and inbox\nbeing carried straight to your new beginning\nbut at the cost of YTPs and Items staying in your previous game!\n\n<b><color=red>THIS WILL ERASE YOUR PREVIOUSLY SAVED GAME.</color></b>" },
-                { "Mode_Arcade", "Infinite Floors" },
-                { "TAG_Boosted", "WANTED!" },
-                { "men_ArcadeForever", "Infinite Floors Forever" }
-            };
-        });
 
         yield return "Instantiating LevelObject and SceneObject";
         InfPitstop = Instantiate(SceneObjectMetaStorage.Instance.Find(scene => scene.title == "PIT").value);
@@ -392,6 +392,35 @@ Current pre-release version: " + PLUGIN_VERSION, false);
         if (Chainloader.PluginInfos.ContainsKey("pixelguy.pixelmodding.baldiplus.custommainmenusapi"))
             CustomMainMenuSupport.InitSupport();
         AssetLoader.LocalizationFromMod(this);
+        AssetLoader.LocalizationFromFunction((lang) =>
+        {
+            return new Dictionary<string, string>()
+            {
+                { "Level_Arcade", "Level INF" },
+                { "But_NewGameINFPlus", "Start New Game+" },
+                { "Men_NewGameINFPlusDesc", "A fresh restart for a new endless run!\nStart back into the floor you began in your previous run\nwith your upgrades and inboxbeing carried straight to your new beginning\nbut at the cost of YTPs and Items staying in your previous game!\n\n<b><color=red>THIS WILL ERASE YOUR PREVIOUSLY SAVED GAME.</color></b>" },
+                { "Mode_Arcade", "Infinite Floors" },
+                { "TAG_Boosted", "WANTED!" },
+                { "men_ArcadeForever", "Infinite Floors Forever" },
+                { "Vfx_Juan_Aid", "I'll take care of that!" },
+                { "Vfx_Juan_Welcome", "Oh hello there, my name is Juan!" },
+                { "Vfx_Juan_Welcome2", "And welcome to my upgrade warehouse." },
+                { "Vfx_Juan_Intro", "First time dialogue" },
+                { "Vfx_Juan_Buy1", "Thanks for the purchase!" },
+                { "Vfx_Juan_Buy2", "Thank you for the purchase, as I can now finally pay my rent." },
+                { "Vfx_Juan_Denied1", "Awh I'm sorry but you cannot afford that." },
+                { "Vfx_Juan_Denied2", "No window shopping!" },
+                { "Vfx_Juan_Denied3", "You can't afford that yet!" },
+                { "Vfx_Juan_ExitSuccess1", "See ya' in the next floor!" },
+                { "Vfx_Juan_ExitSuccess2", "Later!" },
+                { "Vfx_Juan_Exit1", "Urrhh, I think I've already paid my rent by now..." },
+                { "Vfx_Juan_Exit2", "Oh I guess maybe next time?" },
+                { "Vfx_Juan_BusPass_1", "Oh a bus pass, for me??" },
+                { "Vfx_Juan_BusPass_2", "Thank you so much. I'm gonna have a blast with this one!" },
+                { "Vfx_Juan_FieldTrip", "Welcome! Since you've already came back from my field trip, I've brought back some items for you." },
+                { "Vfx_Juan_FillMap", "Your map is filled and ready!" },
+            };
+        });
         FloorPick.sliding = Resources.FindObjectsOfTypeAll<SoundObject>().Last(x => x.name == "Slap");
         FloorPick.slideDone = Resources.FindObjectsOfTypeAll<SoundObject>().Last(x => x.name == "TapeInsert");
         arcadeAssets.Add("F99Finale", AssetLoader.MidiFromMod("99start", this, "Midi", "TimeOut_F99.mid"));
@@ -504,16 +533,61 @@ Current pre-release version: " + PLUGIN_VERSION, false);
         var spriteanimator = shopcontainer.GetComponent<UpgradeWarehouseRoomFunction>().animator;
         volumeanim.animator = spriteanimator;
         volumeanim.audioSource = spriteanimator.GetComponent<AudioSource>();
+        var propagatedWare = warekeeper.gameObject.AddComponent<PropagatedAudioManager>();
+        propagatedWare.audioDevice = volumeanim.audioSource;
+        propagatedWare.ReflectionSetVariable("maxDistance", 200f); // I forever am using this to waste ram.
+        shopcontainer.GetComponent<UpgradeWarehouseRoomFunction>().storekeeperAudMan = propagatedWare;
         spriteanimator.spriteRenderer = spriteanimator.GetComponent<SpriteRenderer>();
-        spriteanimator.gameObject.SetActive(false);
         volumeanim.GetComponent<SpriteRenderer>().sprite = AssetLoader.SpriteFromMod(this, Vector2.one/2f, 28f, "UpgradeWares", "Juan_Base.png");
-        volumeanim.enabled = false;
         var hotspot = Instantiate(storeroombase.Find("JohnnyHotspot"), roombase.transform, true);
         shopcontainer.GetComponent<UpgradeWarehouseRoomFunction>().johnnyHotspot = hotspot;
+        warekeeper.transform.localPosition += (Vector3.down * 0.2f) + (Vector3.forward * 1.5f);
+        warekeeper.transform.localRotation = Quaternion.Euler(0f, 0f, 358f);
+        shopcontainer.GetComponent<UpgradeWarehouseRoomFunction>().mouthAnimator = volumeanim;
+        UpgradeWarehouseRoomFunction.anims.AddRange(new Dictionary<string, CustomAnimation<Sprite>>()
+        {
+            { "Idle", new CustomAnimation<Sprite>([Resources.FindObjectsOfTypeAll<Sprite>().Last(x => x.name == "JohnnyMouthSheet_2")], 1f) },
+            { "Talk1", new CustomAnimation<Sprite>([Resources.FindObjectsOfTypeAll<Sprite>().Last(x => x.name == "JohnnyMouthSheet_0")], 0.25f) },
+            { "Talk2", new CustomAnimation<Sprite>([Resources.FindObjectsOfTypeAll<Sprite>().Last(x => x.name == "JohnnyMouthSheet_4")], 0.25f) },
+            { "IdleFrown", new CustomAnimation<Sprite>([Resources.FindObjectsOfTypeAll<Sprite>().Last(x => x.name == "JohnnyMouthSheet_3")], 1f) },
+            { "Talk3", new CustomAnimation<Sprite>([Resources.FindObjectsOfTypeAll<Sprite>().Last(x => x.name == "JohnnyMouthSheet_1")], 0.25f) }
+        });
+        UpgradeWarehouseRoomFunction.animDefines.AddRange([
+            ["Idle", "Talk2", "Talk1"],
+            ["IdleFrown", "Talk2", "Talk3"],
+            ["IdleFrown", "Talk3", "Talk2"],
+            ["Idle", "Talk1", "Talk2"],
+        ]);
         Instantiate(storeroombase.Find("CashRegister"), roombase.transform, true);
+        var unlazywayWare = shopcontainer.GetComponent<UpgradeWarehouseRoomFunction>();
+        unlazywayWare.audAid = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_Help.wav"), "Vfx_Juan_Aid", SoundType.Voice, Color.white);
+        unlazywayWare.audWelcome = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_Welcome.wav"), "Vfx_Juan_Welcome", SoundType.Voice, Color.white);
+        unlazywayWare.audWelcome.additionalKeys = [new SubtitleTimedKey() {
+            time = 2.2f,
+            key = "Vfx_Juan_Welcome2"
+        }];
+        unlazywayWare.audFirstTime = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_FirstTime.wav"), "Vfx_Juan_Intro", SoundType.Voice, Color.white);
+        unlazywayWare.audBuy1 = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_Buy1.wav"), "Vfx_Juan_Buy1", SoundType.Voice, Color.white);
+        unlazywayWare.audBuy2 = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_Buy2.wav"), "Vfx_Juan_Buy2", SoundType.Voice, Color.white);
+        unlazywayWare.audDenied1 = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_Fail1.wav"), "Vfx_Juan_Denied1", SoundType.Voice, Color.white);
+        unlazywayWare.audDenied2 = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_Fail2.wav"), "Vfx_Juan_Denied2", SoundType.Voice, Color.white);
+        unlazywayWare.audDenied3 = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_Fail3.wav"), "Vfx_Juan_Denied3", SoundType.Voice, Color.white);
+        unlazywayWare.audBuyExit1 = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_SuccessExit1.wav"), "Vfx_Juan_ExitSuccess1", SoundType.Voice, Color.white);
+        unlazywayWare.audBuyExit2 = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_SuccessExit2.wav"), "Vfx_Juan_ExitSuccess2", SoundType.Voice, Color.white);
+        unlazywayWare.audExit1 = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_NoneExit1.wav"), "Vfx_Juan_Exit1", SoundType.Voice, Color.white);
+        unlazywayWare.audExit2 = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_NoneExit2.wav"), "Vfx_Juan_Exit2", SoundType.Voice, Color.white);
+        unlazywayWare.audBusPass = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_BusPass.wav"), "Vfx_Juan_BusPass_1", SoundType.Voice, Color.white);
+        unlazywayWare.audBusPass.additionalKeys = [new SubtitleTimedKey()
+        {
+            time = 2.2f,
+            key = "Vfx_Juan_BusPass_2"
+        }];
+        unlazywayWare.audFieldTrip = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_FieldTrip.wav"), "Vfx_Juan_FieldTrip", SoundType.Voice, Color.white);
+        unlazywayWare.audMap = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "UpgradeWares", "JUN_Map.wav"), "Vfx_Juan_FillMap", SoundType.Voice, Color.white);
 
         var ceilContainerWarehouse = Instantiate(Resources.FindObjectsOfTypeAll<GameObject>().Last(x => x.name == "JohnnySign"), MTM101BaldiDevAPI.prefabTransform, true);
-        ceilContainerWarehouse.GetComponent<SpriteRenderer>().sprite = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 28f, "UpgradeWares", "WarehouseHangars.png");
+        ceilContainerWarehouse.name = "WarehouseHangar";
+        ceilContainerWarehouse.GetComponent<SpriteRenderer>().sprite = AssetLoader.SpriteFromMod(this, new(0.5f, 1f), 28f, "UpgradeWares", "WarehouseHangars.png");
 
         var button = Instantiate(storeroombase.Find("GameButton_1"), new Vector3(65f, 0f, 35f), Quaternion.Euler(0f, 90f, 0f), roombase.transform);
         button = Instantiate(storeroombase.Find("GameButton_1"), new Vector3(65f, 0f, 25f), Quaternion.Euler(0f, 90f, 0f), roombase.transform);
@@ -748,7 +822,7 @@ Current pre-release version: " + PLUGIN_VERSION, false);
             }
             tags.Add(pricetag);
         }
-        shopcontainer.GetComponent<UpgradeWarehouseRoomFunction>().tag = tags.ToArray();
+        shopcontainer.GetComponent<UpgradeWarehouseRoomFunction>().tags = tags.ToArray();
         warehouse.wallTex = arcadeAssets.Get<Texture2D>("Store/WarehouseWall");
         warehouse.ceilTex = arcadeAssets.Get<Texture2D>("Store/WarehouseCeil");
         warehouse.florTex = arcadeAssets.Get<Texture2D>("Store/WarehouseFloor");
@@ -824,7 +898,8 @@ Current pre-release version: " + PLUGIN_VERSION, false);
         register.localPosition = new Vector3(60.6f, register.localPosition.y, 27.5f);
 
         var ceilContainerBountyhouse = Instantiate(Resources.FindObjectsOfTypeAll<GameObject>().Last(x => x.name == "JohnnySign"), MTM101BaldiDevAPI.prefabTransform, true);
-        ceilContainerBountyhouse.GetComponent<SpriteRenderer>().sprite = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 28f, "BountyHouse", "BountyhouseHangars.png");
+        ceilContainerBountyhouse.name = "BountyhouseHangar";
+        ceilContainerBountyhouse.GetComponent<SpriteRenderer>().sprite = AssetLoader.SpriteFromMod(this, new(0.5f, 1f), 28f, "BountyHouse", "BountyhouseHangars.png");
 
         var bountyhouse = Instantiate(storeRoom);
         bountyhouse.name = "Room_ItemBountyhouse";
@@ -833,7 +908,7 @@ Current pre-release version: " + PLUGIN_VERSION, false);
         bountyhouse.potentialDoorPositions = [new(0, 2)];
         bountyhouse.forcedDoorPositions = [new(0, 2)];
         bountyhouse.requiredDoorPositions = [new(0, 2)];
-        bountyhouse.secretCells = [new(6,1), new(6,3)];
+        bountyhouse.secretCells = [new(6, 1), new(6, 3)];
         bountyhouse.cells.Find(cell => cell.pos == new IntVector2(3, 0)).type = 4;
         bountyhouse.cells.RemoveAll(cell => cell.pos.x == 6 && cell.pos.z != 1 && cell.pos.z != 2 && cell.pos.z != 3);
         bountyhouse.cells.RemoveAll(cell => cell.pos.z == 5);
@@ -1040,12 +1115,12 @@ Current pre-release version: " + PLUGIN_VERSION, false);
         bountyhouse.windowChance = 0f;
         bountyhouse.doorMats = Resources.FindObjectsOfTypeAll<StandardDoorMats>().Last(x => x.name == "DefaultDoorSet"); // Placeholder for now...
 
-        warehouse.posterDatas.Add(new PosterData()
+        /*warehouse.posterDatas.Add(new PosterData()
         {
             poster = placeholdPoster,
             direction = Direction.West,
             position = new(0, 3)
-        });
+        });*/
         bountyhouse.posterDatas.Add(new PosterData()
         {
             poster = placeholdPoster,

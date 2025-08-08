@@ -9,6 +9,7 @@ using UnityEngine;
 using EndlessFloorsForever.Patches;
 using MTM101BaldAPI.Reflection;
 using System.Collections;
+using System.Reflection;
 
 namespace EndlessFloorsForever.Components;
 
@@ -19,6 +20,45 @@ public class InfGameManager : MainGameManager
         defaultLives = 2 + EndlessForeverPlugin.Instance.gameSave.GetUpgradeCount("bonuslife");
     }
     protected new void Start() => UpdateData();
+
+    private bool IsModifiedOutside(CustomLevelGenerationParameters parameter, CustomLevelGenerationParameters copy, ArcadeParameterOrder order)
+    {
+        var infos = typeof(LevelGenerationParameters).GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).ToList();
+        switch (order)
+        {
+            case ArcadeParameterOrder.Structures:
+                infos.RemoveAll(x => x.Name == "forcedStructures" || x.Name == "potentialStructures");
+                break;
+            case ArcadeParameterOrder.Rooms:
+                infos.RemoveAll(x => x.Name == "roomGroup" || x.Name == "minPostPlotSpecialHalls" || x.Name == "maxPostPlotSpecialHalls" || x.Name == "potentialPostPlotSpecialHalls");
+                break;
+            case ArcadeParameterOrder.Post:
+                infos.RemoveAll(x =>
+                x.Name == "roomGroup" || x.Name == "minPostPlotSpecialHalls" || x.Name == "maxPostPlotSpecialHalls" || x.Name == "potentialPostPlotSpecialHalls" ||
+                x.Name == "minSize" || x.Name == "maxSize" || x.Name == "outerEdgeBuffer");
+                break;
+        }
+        foreach (var info in infos)
+        {
+            if (info.GetValue(parameter)?.Equals(info.GetValue(copy)) == false)
+            {
+                EndlessForeverPlugin.Log.LogError($"\nModified variable: {info.Name}\nTriggered order: {order.ToStringExtended()}");
+                EndlessForeverPlugin.Log.LogError($"{info.GetValue(parameter)} != {info.GetValue(copy)}");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private CustomLevelGenerationParameters Makecopy(CustomLevelGenerationParameters parameter)
+    {
+        var infos = typeof(LevelGenerationParameters).GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        CustomLevelGenerationParameters thecopy = new CustomLevelGenerationParameters();
+        foreach (var info in infos)
+            info.SetValue(thecopy, info.GetValue(parameter));
+
+        return thecopy;
+    }
 
     [SerializeField] internal SoundObject F99AllNotebooks;
 
@@ -90,10 +130,8 @@ public class InfGameManager : MainGameManager
 
         lvlObj.forcedStructures = genData.forcedObjectBuilders.ToArray();
         lvlObj.potentialStructures = genData.potentialObjectBuilders.ToArray();
-
-
-        lvlObj.maxSpecialBuilders = Mathf.Min(Mathf.FloorToInt(currentFD.maxSize / 24f), lvlObj.potentialStructures.Length);
-        lvlObj.minSpecialBuilders = Mathf.Min(Mathf.FloorToInt((currentFD.maxSize / 24f) / 1.5f), lvlObj.potentialStructures.Length);
+        lvlObj.maxSpecialBuilders = Mathf.Min(Mathf.FloorToInt(currentFD.maxSize / 12f), lvlObj.potentialStructures.Length);
+        lvlObj.minSpecialBuilders = Mathf.RoundToInt(lvlObj.maxSpecialBuilders / 1.5f);
 
         System.Random stableRng = new System.Random(CoreGameManager.Instance.Seed());
         stableRng.Next();
@@ -127,14 +165,57 @@ public class InfGameManager : MainGameManager
             var oldman = structure.parameters;
             structure.parameters = new StructureParameters()
             {
-                prefab = oldman.prefab,
-                chance = oldman.chance,
-                minMax = oldman.minMax,
+                prefab = [.. oldman.prefab],
+                chance = [.. oldman.chance],
+                minMax = [.. oldman.minMax],
             };
         }
-        if (structures.Exists(struc => struc?.prefab is Structure_StudentSpawner))
-            structures.Find(struc => struc?.prefab is Structure_StudentSpawner).parameters.minMax = [new IntVector2(rng.Next(lvlObj.exitCount - 1, Mathf.RoundToInt(sceneObj.levelNo / 4)), rng.Next(lvlObj.exitCount - 1, Mathf.RoundToInt(sceneObj.levelNo / 2)))];
         lvlObj.forcedStructures = structures.ToArray();
+        var structures2 = ((WeightedStructureWithParameters[])lvlObj.potentialStructures.Clone()).ToList();
+        foreach (var structure in structures2)
+        {
+            var oldman = structure.selection.parameters;
+            structure.selection.parameters = new StructureParameters()
+            {
+                prefab = [.. oldman.prefab],
+                chance = [.. oldman.chance],
+                minMax = [.. oldman.minMax],
+            };
+        }
+        lvlObj.potentialStructures = structures2.ToArray();
+
+        if (lvlObj.forcedStructures.ToList().Exists(struc => struc?.prefab is Structure_StudentSpawner))
+            lvlObj.forcedStructures.First(struc => struc?.prefab is Structure_StudentSpawner).parameters.minMax = [new IntVector2(rng.Next(lvlObj.exitCount - 1, Mathf.RoundToInt(sceneObj.levelNo / 4)), rng.Next(lvlObj.exitCount - 1, Mathf.RoundToInt(sceneObj.levelNo / 2)))];
+        if (lvlObj.forcedStructures.ToList().Exists(struc => struc?.prefab is Structure_PowerLever))
+        {
+            var powerlever = lvlObj.forcedStructures.First(struc => struc?.prefab is Structure_PowerLever);
+            powerlever.parameters.minMax[0] = new IntVector2(Mathf.Min(Mathf.RoundToInt(currentFD.classRoomCount / 2f), 8), Mathf.Min(Mathf.RoundToInt(currentFD.classRoomCount / 3f), 8));
+            powerlever.parameters.minMax[2] = new IntVector2(Mathf.Min(Mathf.RoundToInt(currentFD.classRoomCount / 4f), 6), Mathf.Min(Mathf.RoundToInt(currentFD.classRoomCount / 6f)));
+            powerlever.parameters.minMax[1] = new IntVector2(Mathf.Min(powerlever.parameters.minMax[2].x + 1, Mathf.RoundToInt(currentFD.minFacultyRoomCount / 4f), 7), Mathf.Min(powerlever.parameters.minMax[2].z + 1, Mathf.RoundToInt(currentFD.maxFacultyRoomCount / 4f), 7));
+        }
+        if (lvlObj.forcedStructures.ToList().Exists(struc => struc?.prefab is Structure_Vent))
+        {
+            var vent = lvlObj.forcedStructures.First(struc => struc?.prefab is Structure_Vent);
+            int amount = Mathf.FloorToInt(currentFD.maxFacultyRoomCount / 2.5f);
+            vent.parameters.minMax[0] = new IntVector2(amount, amount);
+        }
+        else if (lvlObj.potentialStructures.ToList().Exists(struc => struc.selection?.prefab is Structure_Vent))
+        {
+            var vent = lvlObj.potentialStructures.First(struc => struc.selection?.prefab is Structure_Vent).selection;
+            int amount = Mathf.FloorToInt(currentFD.maxFacultyRoomCount / 2.5f);
+            vent.parameters.minMax[0] = new IntVector2(amount, amount);
+        }
+
+        CustomLevelGenerationParameters copy = Makecopy((CustomLevelGenerationParameters)lvlObj);
+        foreach (var action in EndlessForeverPlugin.managerActions[ArcadeParameterOrder.Structures])
+            action.Value.Invoke((CustomLevelGenerationParameters)lvlObj, rng);
+        if (IsModifiedOutside((CustomLevelGenerationParameters)lvlObj, copy, ArcadeParameterOrder.Structures))
+        {
+            EndlessForeverPlugin.Log.LogError("Level object has modified variables that were meant to be modified in `ExtendGenData` or were never meant to be modified by mods.");
+            CoreGameManager.Instance.levelGenError = true;
+            FindObjectOfType<GameInitializer>().gameObject.SetActive(false);
+            return;
+        }
 
         stableRng = new System.Random(CoreGameManager.Instance.Seed());
         stableRng.Next();
@@ -146,7 +227,7 @@ public class InfGameManager : MainGameManager
         float coldLight = Mathf.Max(Mathf.Sin(((currentFD.FloorID / (1f + (float)(rng.NextDouble() * 15f))) + stableRng.Next(-50, 50))), 0f);
         float warmLight = Mathf.Max(Mathf.Sin(((currentFD.FloorID / (1f + (float)(rng.NextDouble() * 15f))) + stableRng.Next(-50, 50))), 0f);
 
-        lvlObj.standardLightColor = Color.Lerp(Color.Lerp(Color.white, coldColor, coldLight), warmColor, warmLight);
+        lvlObj.standardLightColor = Color.Lerp(Color.Lerp(lvlObj.standardLightColor, coldColor, coldLight), warmColor, warmLight);
 
         if ((currentFD.FloorID % 99) == 0)
             lvlObj.standardLightColor = Color.Lerp(lvlObj.standardLightColor, Color.red, 0.3f);
@@ -279,6 +360,17 @@ public class InfGameManager : MainGameManager
 
         lvlObj.specialRoomsStickToEdge = ((currentFD.FloorID < 22) || (currentFD.FloorID % 24 == 0));
 
+        copy = Makecopy((CustomLevelGenerationParameters)lvlObj);
+        foreach (var action in EndlessForeverPlugin.managerActions[ArcadeParameterOrder.Rooms])
+            action.Value.Invoke((CustomLevelGenerationParameters)lvlObj, rng);
+        if (IsModifiedOutside((CustomLevelGenerationParameters)lvlObj, copy, ArcadeParameterOrder.Rooms))
+        {
+            EndlessForeverPlugin.Log.LogError("Level object has modified variables that were meant to be modified in `ExtendGenData` or were never meant to be modified by mods.");
+            CoreGameManager.Instance.levelGenError = true;
+            FindObjectOfType<GameInitializer>().gameObject.SetActive(false);
+            return;
+        }
+
         // NPCs
         sceneObj.forcedNpcs = [];
         sceneObj.potentialNPCs = [];
@@ -310,6 +402,17 @@ public class InfGameManager : MainGameManager
 
         if ((currentFD.FloorID % 99) == 0) // Oh no...
             lvlObj.timeLimit = float.PositiveInfinity;
+
+        copy = Makecopy((CustomLevelGenerationParameters)lvlObj);
+        foreach (var action in EndlessForeverPlugin.managerActions[ArcadeParameterOrder.Post])
+            action.Value.Invoke((CustomLevelGenerationParameters)lvlObj, rng);
+        if (IsModifiedOutside((CustomLevelGenerationParameters)lvlObj, copy, ArcadeParameterOrder.Post))
+        {
+            EndlessForeverPlugin.Log.LogError("Level object has modified variables that were meant to be modified in `ExtendGenData` or were never meant to be modified by mods.");
+            CoreGameManager.Instance.levelGenError = true;
+            FindObjectOfType<GameInitializer>().gameObject.SetActive(false);
+            return;
+        }
     }
 
     public override void Initialize()
@@ -319,9 +422,9 @@ public class InfGameManager : MainGameManager
         if (CoreGameManager.Instance.lifeMode != LifeMode.Explorer && (EndlessForeverPlugin.currentFloorData.FloorID % 99) == 0)
         {
             AccessTools.Field(typeof(MainGameManager), "allNotebooksNotification").SetValue(this, F99AllNotebooks);
-            var timeout = FindObjectOfType<TimeOut>();
-            timeout.ReflectionSetVariable("baldiAngerRate", 9f);
-            timeout.ReflectionSetVariable("baldiAngerAmount", 0.9f);
+            outage = FindObjectOfType<TimeOut>();
+            outage.ReflectionSetVariable("baldiAngerRate", 9f);
+            outage.ReflectionSetVariable("baldiAngerAmount", 0.9f);
         }
         base.Initialize();
         notebookAngerVal = 9f / NotebookTotal;
@@ -358,16 +461,27 @@ public class InfGameManager : MainGameManager
         }
         base.LoadNextLevel();
     }
+    private static MethodInfo alarmExc = AccessTools.DeclaredMethod(typeof(BaldiTV), "Exclamation");
+    private static MethodInfo tvQueue = AccessTools.DeclaredMethod(typeof(BaldiTV), "QueueEnumerator");
+    private TimeOut outage;
 
     protected override void AllNotebooks()
     {
         if (!allNotebooksFound && CoreGameManager.Instance.lifeMode != LifeMode.Explorer && (EndlessForeverPlugin.currentFloorData.FloorID % 99) == 0)
         {
-            var outage = FindObjectOfType<TimeOut>();
+            var tvman = CoreGameManager.Instance.GetHud(0).BaldiTv;
             AudioManager audMan = AccessTools.DeclaredField(typeof(EnvironmentController), "audMan").GetValue(ec) as AudioManager;
             audMan.PlaySingle(outage.EventJingleOverride);
+            tvQueue.Invoke(tvman, [(IEnumerator)alarmExc.Invoke(tvman, [2.5f])]);
             IEnumerator Doomsday()
             {
+                float delay = 0.01f;
+                while (delay > 0f)
+                {
+                    delay -= Time.deltaTime;
+                    yield return null;
+                }
+                base.AllNotebooks();
                 float timer = 3f;
                 while (timer > 0f)
                 {
@@ -378,6 +492,14 @@ public class InfGameManager : MainGameManager
             }
             ec.StartCoroutine(Doomsday());
         }
-        base.AllNotebooks();
+        else
+            base.AllNotebooks();
     }
+}
+
+public enum ArcadeParameterOrder
+{
+    Structures,
+    Rooms,
+    Post
 }

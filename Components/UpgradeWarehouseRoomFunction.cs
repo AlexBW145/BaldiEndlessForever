@@ -19,7 +19,7 @@ namespace EndlessFloorsForever.Components
         internal Transform roomBase;
         
         [SerializeField]
-        internal new PriceTag[] tag = new PriceTag[0];
+        internal PriceTag[] tags = new PriceTag[0];
         private List<Pickup> pickups = new List<Pickup>();
         internal List<StandardUpgrade> upgrades = new List<StandardUpgrade>();
         private float minSaleDiscount = 0.5f;
@@ -70,7 +70,16 @@ namespace EndlessFloorsForever.Components
         [SerializeField]
         internal CustomSpriteAnimator animator;
         [SerializeField]
+        internal CustomVolumeAnimator mouthAnimator;
+        [SerializeField]
+        internal AudioManager storekeeperAudMan;
+        [SerializeField]
         internal Transform johnnyHotspot;
+
+        [SerializeField] internal SoundObject audWelcome, audFirstTime, audBuy1, audBuy2, audAid, audDenied1, audDenied2, audDenied3, audExit1, audExit2, audBuyExit1, audBuyExit2, audBusPass, audFieldTrip, audMap;
+
+        internal static readonly Dictionary<string, CustomAnimation<Sprite>> anims = new Dictionary<string, CustomAnimation<Sprite>>();
+        internal static readonly List<string[]> animDefines = new List<string[]>();
 
         private ItemObject upgradeObject => EndlessForeverPlugin.arcadeAssets["Store/UpgradeObject"] as ItemObject;
 
@@ -79,6 +88,10 @@ namespace EndlessFloorsForever.Components
             base.Initialize(room);
             johnnyHotspot.GetComponent<ItemAcceptor>().OnInsert = new UnityEvent();
             johnnyHotspot.GetComponent<ItemAcceptor>().OnInsert.AddListener(GivenBusPass);
+            anims.Do(x => animator.animations.Add(x.Key, x.Value));
+            mouthAnimator.animator = animator;
+            mouthAnimator.animations = animDefines[0];
+            mouthAnimator.sensitivity = null;
             roomBase.SetParent(room.objectObject.transform);
             inGameMode = CoreGameManager.Instance.sceneObject.levelTitle == "PIT";
 
@@ -110,6 +123,18 @@ namespace EndlessFloorsForever.Components
         {
             if (room.ec.timeOut && totalCustomers <= 0 && open)
                 Close();
+
+            if (storekeeperAudMan.QueuedAudioIsPlaying)
+            {
+                if (new AudioClip[] { audExit1.soundClip, audExit2.soundClip, audDenied1.soundClip, audDenied3.soundClip }.Contains(storekeeperAudMan.audioDevice.clip))
+                    mouthAnimator.animations = animDefines[2];
+                else if (storekeeperAudMan.audioDevice.clip == audDenied2.soundClip)
+                    mouthAnimator.animations = animDefines[1];
+                else if (new AudioClip[] { audMap.soundClip, audAid.soundClip, audExit2.soundClip, audBusPass.soundClip }.Contains(storekeeperAudMan.audioDevice.clip))
+                    mouthAnimator.animations = animDefines[3];
+                else
+                    mouthAnimator.animations = animDefines[0];
+            }
         }
 
         private void Restock()
@@ -195,7 +220,7 @@ namespace EndlessFloorsForever.Components
                 if (pickup.item.itemType == Items.None || upgrades[i].id == "error")
                 {
                     pickup.gameObject.SetActive(false);
-                    tag[i].SetText(LocalizationManager.Instance.GetLocalizedText(upgrades[i].id == "error" ? "TAG_Out" : "TAG_Sold"));
+                    tags[i].SetText(LocalizationManager.Instance.GetLocalizedText(upgrades[i].id == "error" ? "TAG_Out" : "TAG_Sold"));
                     continue;
                 }
                 int originalPrice = upgrades[i].GetCost(EndlessForeverPlugin.Instance.gameSave.GetUpgradeCount(upgrades[i].id));
@@ -205,10 +230,10 @@ namespace EndlessFloorsForever.Components
                     float discount = pickup.gameObject.GetComponent<UpgradePickupMarker>().discountRange; // Why update it every time WHEN IT CAN REDO THE SALE ITSELF!
                     float discount2 = finalPrice * discount;
                     finalPrice = Mathf.RoundToInt(discount2 - discount2 % 10f);
-                    tag[i].SetSale(originalPrice, finalPrice);
+                    tags[i].SetSale(originalPrice, finalPrice);
                 }
                 else
-                    tag[i].SetText(finalPrice.ToString());
+                    tags[i].SetText(finalPrice.ToString());
                 pickup.price = finalPrice;
                 pickup.free = false;
                 pickup.gameObject.SetActive(true);
@@ -218,6 +243,7 @@ namespace EndlessFloorsForever.Components
         public override void OnGenerationFinished()
         {
             base.OnGenerationFinished();
+            mouthAnimator.audioSource = storekeeperAudMan.audioDevice;
             if (inGameMode && !EndlessForeverPlugin.Instance.gameSave.IsInfGamemode)
                 Close();
             else
@@ -247,7 +273,15 @@ namespace EndlessFloorsForever.Components
             if (open)
             {
                 if (!playerEntered)
+                {
                     playerEntered = true;
+                    storekeeperAudMan.QueueAudio(audWelcome);
+                    if (inGameMode && !EndlessForeverPlugin.Instance.firstEncounters.Item2)
+                    {
+                        storekeeperAudMan.QueueAudio(audFirstTime);
+                        EndlessForeverPlugin.Instance.firstEncounters = new Tuple<bool, bool, bool>(EndlessForeverPlugin.Instance.firstEncounters.Item1, true, EndlessForeverPlugin.Instance.firstEncounters.Item3);
+                    }
+                }
 
                 johnnyHotspot.gameObject.SetActive(!CoreGameManager.Instance.tripPlayed && CoreGameManager.Instance.tripAvailable && inGameMode);
             }
@@ -292,6 +326,10 @@ namespace EndlessFloorsForever.Components
                 if (!playerLeft)
                 {
                     playerLeft = true;
+                    if (itemPurchased)
+                        storekeeperAudMan.QueueRandomAudio([audBuyExit1, audBuyExit2]);
+                    else
+                        storekeeperAudMan.QueueRandomAudio([audExit1, audExit2]);
                 }
 
                 return;
@@ -330,6 +368,9 @@ namespace EndlessFloorsForever.Components
             {
                 itemPurchased = true;
                 playerLeft = false;
+                
+                if (!storekeeperAudMan.QueuedUp)
+                    storekeeperAudMan.QueueRandomAudio([audBuy1, audBuy2]);
             }
         }
 
@@ -342,7 +383,6 @@ namespace EndlessFloorsForever.Components
             if (!open)
             {
                 thief = true;
-                CoreGameManager.Instance.johnnyHelped = true;
                 BaseGameManager.Instance.AngerBaldi(baldiStealAnger);
                 if (!alarmStarted)
                     SetOffAlarm();
@@ -354,14 +394,18 @@ namespace EndlessFloorsForever.Components
         {
             if (open)
             {
-                if (pickup != null && !EndlessForeverPlugin.Instance.gameSave.upgradeStoreHelped && pickup.price - CoreGameManager.Instance.GetPoints(0) <= aidLimit)
+                if (pickup != null && !EndlessForeverPlugin.Instance.gameSave.upgradeStoreHelped && pickup.price - CoreGameManager.Instance.GetPoints(player) <= aidLimit)
                 {
                     pickup.Collect(player);
+                    storekeeperAudMan.FlushQueue(true);
+                    storekeeperAudMan.QueueAudio(audAid);
                     EndlessForeverPlugin.Instance.gameSave.upgradeStoreHelped = true;
                     CoreGameManager.Instance.AddPoints(-CoreGameManager.Instance.GetPoints(player), player, playAnimation: true, false);
                     itemPurchased = true;
                     playerLeft = false;
                 }
+                else if (!storekeeperAudMan.QueuedUp)
+                    storekeeperAudMan.QueueRandomAudio([audDenied1, audDenied2, audDenied3]);
             }
         }
 
@@ -373,6 +417,8 @@ namespace EndlessFloorsForever.Components
                 Restock();
                 CoreGameManager.Instance.AddPoints(-restockPrice, 0, true, false);
                 CoreGameManager.Instance.audMan.PlaySingle(audBell);
+                if (!storekeeperAudMan.QueuedUp)
+                    storekeeperAudMan.QueueRandomAudio([audBuy1, audBuy2]);
 
                 itemPurchased = true;
                 playerLeft = false;
@@ -391,12 +437,16 @@ namespace EndlessFloorsForever.Components
             {
                 purchased = true;
                 CoreGameManager.Instance.AddPoints(-CoreGameManager.Instance.nextLevel.mapPrice, 0, true, false);
+                if (!storekeeperAudMan.QueuedUp)
+                    storekeeperAudMan.QueueAudio(audMap);
             }
             else if (!CoreGameManager.Instance.johnnyHelped && CoreGameManager.Instance.nextLevel.mapPrice >= 1000 && CoreGameManager.Instance.nextLevel.mapPrice - CoreGameManager.Instance.GetPoints(0) <= 100)
             {
                 CoreGameManager.Instance.johnnyHelped = true;
                 purchased = true;
                 CoreGameManager.Instance.AddPoints(-CoreGameManager.Instance.GetPoints(0), 0, true, false);
+                storekeeperAudMan.FlushQueue(true);
+                storekeeperAudMan.QueueAudio(audAid);
             }
 
             if (purchased)
@@ -414,6 +464,8 @@ namespace EndlessFloorsForever.Components
 
         internal void GivenBusPass()
         {
+            storekeeperAudMan.FlushQueue(true);
+            storekeeperAudMan.QueueAudio(audBusPass);
             StartCoroutine(BusPassSequencer());
             itemPurchased = true;
             johnnyHotspot.gameObject.SetActive(value: false);
@@ -422,9 +474,11 @@ namespace EndlessFloorsForever.Components
         private IEnumerator BusPassSequencer()
         {
             yield return null;
-            yield return new WaitForSecondsEnvironmentTimescale(room.ec, 1.7f);
+            while (storekeeperAudMan.QueuedAudioIsPlaying)
+                yield return null;
 
             BaseGameManager.Instance.CallSpecialManagerFunction(3, gameObject);
+            storekeeperAudMan.QueueAudio(audFieldTrip);
         }
 
         private void MarkItemAsSold(Pickup pickup)
@@ -437,7 +491,7 @@ namespace EndlessFloorsForever.Components
 
             for (int i = 0; i < pickups.Count; i++)
                 if (pickups[i] == pickup)
-                    tag[i].SetText(LocalizationManager.Instance.GetLocalizedText("TAG_Sold"));
+                    tags[i].SetText(LocalizationManager.Instance.GetLocalizedText("TAG_Sold"));
         }
 
         private void SetOffAlarm()
@@ -459,6 +513,7 @@ namespace EndlessFloorsForever.Components
         private void Open()
         {
             open = true;
+            animator.transform.parent.gameObject.SetActive(true);
             foreach (Door door in room.doors)
                 door.Unlock();
 
@@ -472,6 +527,7 @@ namespace EndlessFloorsForever.Components
         private void Close()
         {
             open = false;
+            animator.transform.parent.gameObject.SetActive(false);
             foreach (Door door in room.doors)
                 door.Lock(true);
 
@@ -485,8 +541,8 @@ namespace EndlessFloorsForever.Components
                 pickup.free = true;
                 pickup.gameObject.SetActive(false);
             }
-            for (int i = 0; i < tag.Count(); i++)
-                tag[i].SetText(LocalizationManager.Instance.GetLocalizedText("TAG_Out"));
+            for (int i = 0; i < tags.Count(); i++)
+                tags[i].SetText(LocalizationManager.Instance.GetLocalizedText("TAG_Out"));
             if (inGameMode)
                 foreach (var door in room.GetPotentialDoorCells().FindAll(door => door.Tile.gameObject.GetComponentInChildren<Door>() != null))
                     door.Tile.gameObject.GetComponentInChildren<Door>().Lock(true);

@@ -63,6 +63,8 @@ namespace EndlessFloorsForever.Components
         [SerializeField]
         internal CustomSpriteAnimator animator;
 
+        private readonly float dividerAmount = EndlessForeverPlugin.Instance.InGameMode ? Mathf.Max(1.15f, 1.5f - ((Mathf.CeilToInt(EndlessForeverPlugin.currentFloorData.FloorID / 15f) - 1f) * 0.1f)) : 1.5f;
+
         private ItemObject bountyObject => EndlessForeverPlugin.arcadeAssets["Store/YTPBountyObject"] as ItemObject;
 
         public override void Initialize(RoomController room)
@@ -106,7 +108,7 @@ namespace EndlessFloorsForever.Components
                 var bounty = pickup.gameObject.GetOrAddComponent<BountyPickup>();
                 pickup.AssignItem(bountyObject);
 
-                pickup.price = Mathf.RoundToInt(bounty.item.price / 1.5f);
+                pickup.price = Mathf.RoundToInt(bounty.item.price / dividerAmount);
                 bounty.value = pickup.price;
                 bounty.boosted = UnityEngine.Random.value < boostChance;
                 itemframe[i].sprite = bounty.item.itemSpriteLarge;
@@ -140,7 +142,7 @@ namespace EndlessFloorsForever.Components
                 if (!pickup.gameObject.activeSelf) continue;
                 var bounty = pickup.gameObject.GetComponent<BountyPickup>();
 
-                pickup.price = Mathf.RoundToInt(bounty.item.price / 1.5f);
+                pickup.price = Mathf.RoundToInt(bounty.item.price / dividerAmount);
                 bounty.value = pickup.price;
                 itemframe[i].sprite = bounty.item.itemSpriteLarge;
                 int originalPrice = bounty.value;

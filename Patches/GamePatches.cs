@@ -110,17 +110,18 @@ namespace EndlessFloorsForever.Patches
             }*/
         }
         [HarmonyPatch(typeof(PlayerManager), "Start"), HarmonyPostfix]
-        static void IHideNow(ref float ___maxHideableLightLevel)
+        static void IHideNow(PlayerManager __instance, ref float ___maxHideableLightLevel)
         {
-            if (CoreGameManager.Instance.sceneObject == EndlessForeverPlugin.Instance.inflevel && ___maxHideableLightLevel < 0.1f)
-                ___maxHideableLightLevel = 0.1f;
-        }
-        [HarmonyPatch(typeof(ItemManager), "Awake"), HarmonyPrefix]
-        static void SlotAwakePatch(ItemManager __instance)
-        {
-            if (!EndlessForeverPlugin.Instance.gameSave.IsInfGamemode) return;
-            __instance.maxItem = EndlessForeverPlugin.Instance.gameSave.itemSlots - 1;
-            CoreGameManager.Instance.GetHud(__instance.pm.playerNumber).UpdateInventorySize(__instance.maxItem + 1);
+            if (CoreGameManager.Instance.sceneObject == EndlessForeverPlugin.Instance.inflevel || CoreGameManager.Instance.sceneObject == EndlessForeverPlugin.Instance.InfPitstop)
+            {
+                if (___maxHideableLightLevel < 0.1f)
+                    ___maxHideableLightLevel = 0.1f;
+                if (EndlessForeverPlugin.Instance.InGameMode)
+                {
+                    __instance.itm.maxItem = EndlessForeverPlugin.Instance.gameSave.itemSlots - 1;
+                    CoreGameManager.Instance.GetHud(__instance.playerNumber).UpdateInventorySize(__instance.itm.maxItem + 1);
+                }
+            }
         }
 
         [HarmonyPatch(typeof(NoLateTeacher), nameof(NoLateTeacher.PlayerCaught)), HarmonyPrefix]

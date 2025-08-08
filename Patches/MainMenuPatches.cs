@@ -137,7 +137,7 @@ namespace EndlessFloorsForever.Patches
                         local.gameObject.GetComponent<TMP_Text>().text = string.Format(local.gameObject.GetComponent<TMP_Text>().text, EndlessForeverPlugin.Instance.gameSave.currentFloor, EndlessForeverPlugin.Instance.gameSave.startingFloor);
                     });*/
 
-                    if (EndlessForeverPlugin.Instance.gameSave.startingFloor == 1 && EndlessForeverPlugin.Instance.gameSave.currentFloor > 99)
+                    if ((EndlessForeverPlugin.Instance.gameSave.currentFloor + 1) - EndlessForeverPlugin.Instance.gameSave.startingFloor > 99)
                     {
                         var theman = ___mainNew.transform;
                         ___mainNewWarning.GetComponent<RectTransform>().anchoredPosition = new Vector2(-110f, 80f);
@@ -154,8 +154,7 @@ namespace EndlessFloorsForever.Patches
                             var previnbox = EndlessForeverPlugin.Instance.gameSave.inbox;
                             var prevcounters = EndlessForeverPlugin.Instance.gameSave.Counters;
 
-                            EndlessForeverPlugin.Instance.gameSave.currentFloor = 1;
-                            EndlessForeverPlugin.Instance.gameSave.startingFloor = 1;
+                            EndlessForeverPlugin.Instance.gameSave.currentFloor = EndlessForeverPlugin.Instance.gameSave.startingFloor;
                             InfGameManager.UpdateData();
 
                             ModdedFileManager.Instance.DeleteSavedGame();

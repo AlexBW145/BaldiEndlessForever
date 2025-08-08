@@ -63,8 +63,8 @@ class MiscPatches
 
 <size=85%>Continuation made by AlexBW145
 F99 Music borrowed from Rapparep
-Restock & Map Fill posters in Upgrade Warehouse shop plus Upgrade Warehouse designs by B-Side Skid (on Gamebanana)
-New speedy boots upgrade icons by AlexBW145</size>";
+Restock & Map Fill posters in Upgrade Warehouse shop plus Upgrade Warehouse room designs and Juan's base appearance by B-Side Skid (on Gamebanana)
+New speedy boots upgrade icons and Juan's voice by AlexBW145</size>";
         var credits2 = GameObject.Instantiate(__instance.screens[0], null);
         credits2.GetComponentsInChildren<TextMeshProUGUI>()[0].text = @"Texture Sets Included
 
