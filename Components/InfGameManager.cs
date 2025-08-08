@@ -162,25 +162,35 @@ public class InfGameManager : MainGameManager
         var structures = ((StructureWithParameters[])lvlObj.forcedStructures.Clone()).ToList();
         foreach (var structure in structures)
         {
-            var oldman = structure.parameters;
-            structure.parameters = new StructureParameters()
+            if (structure.parameters != null)
             {
-                prefab = [.. oldman.prefab],
-                chance = [.. oldman.chance],
-                minMax = [.. oldman.minMax],
-            };
+                var oldman = structure.parameters;
+                structure.parameters = new StructureParameters()
+                {
+                    prefab = [.. oldman.prefab],
+                    chance = [.. oldman.chance],
+                    minMax = [.. oldman.minMax],
+                };
+                continue;
+            }
+            structure.parameters = new StructureParameters();
         }
         lvlObj.forcedStructures = structures.ToArray();
         var structures2 = ((WeightedStructureWithParameters[])lvlObj.potentialStructures.Clone()).ToList();
         foreach (var structure in structures2)
         {
-            var oldman = structure.selection.parameters;
-            structure.selection.parameters = new StructureParameters()
+            if (structure.selection.parameters != null)
             {
-                prefab = [.. oldman.prefab],
-                chance = [.. oldman.chance],
-                minMax = [.. oldman.minMax],
-            };
+                var oldman = structure.selection.parameters;
+                structure.selection.parameters = new StructureParameters()
+                {
+                    prefab = [.. oldman.prefab],
+                    chance = [.. oldman.chance],
+                    minMax = [.. oldman.minMax],
+                };
+                continue;
+            }
+            structure.selection.parameters = new StructureParameters();
         }
         lvlObj.potentialStructures = structures2.ToArray();
 

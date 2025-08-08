@@ -21,14 +21,9 @@ namespace EndlessFloorsForever.Components
             objects.Do((WeightedItemObject obj) =>
             {
                 ogWeights.Add(obj, obj.weight);
-                if (obj.weight > weightAverage)
-                {
-                    obj.weight = Mathf.FloorToInt(obj.weight / LuckValues[EndlessForeverPlugin.Instance.GetUpgradeCount("luck")]);
-                }
-                else
-                {
-                    obj.weight = Mathf.CeilToInt(obj.weight * LuckValues[EndlessForeverPlugin.Instance.GetUpgradeCount("luck")]);
-                }
+                obj.weight = 
+                obj.weight > weightAverage ? Mathf.FloorToInt(obj.weight / LuckValues[Mathf.Min(EndlessForeverPlugin.Instance.GetUpgradeCount("luck"), LuckValues.Length)]) 
+                : Mathf.CeilToInt(obj.weight * LuckValues[Mathf.Min(EndlessForeverPlugin.Instance.GetUpgradeCount("luck"), LuckValues.Length)]);
             });
             if (pm.itm.InventoryFull() && pm.itm.items[pm.itm.selectedItem].itemType != Items.None)
                 pm.ec.CreateItem(pm.plm.Entity.CurrentRoom, pm.itm.items[pm.itm.selectedItem], new Vector2(pm.transform.position.x, pm.transform.position.z));

@@ -30,7 +30,7 @@ namespace EndlessFloorsForever.Patches
                     yield return Transpilers.EmitDelegate<Action<ItemManager>>((__instance) =>
                     {
                         if (EndlessForeverPlugin.Instance.HasUpgrade("bank"))
-                            if (Percentages[EndlessForeverPlugin.Instance.GetUpgradeCount("bank")] >= UnityEngine.Random.Range(0f, 100f))
+                            if (Percentages[Mathf.Min(EndlessForeverPlugin.Instance.GetUpgradeCount("bank"), Percentages.Length)] >= UnityEngine.Random.Range(0f, 100f))
                                 __instance.SetItem(MTM101BaldiDevAPI.itemMetadata.FindByEnum(Items.Quarter).value, __instance.selectedItem);
                     });
                 }

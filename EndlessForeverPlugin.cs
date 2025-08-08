@@ -2113,13 +2113,12 @@ internal class ArcadeEndlessForeverSave : ModdedSaveGameIOBinary
                 {
                     if (Upgrades[i].id == upgrade.id)
                         return Upgrades[i].count < upgrade.levels.Length;
-                    else if (Upgrades[i].id == "none" && (UpgradeShop.Instance != null
-                        || !Inbox))
+                    else if (Upgrades[i].id == "none" && !Inbox)
                         return true;
                 }
                 for (int i = 0; i < inbox.Length; i++)
                 {
-                    if (inbox[i].id == "none" && Inbox && UpgradeShop.Instance == null)
+                    if (inbox[i].id == "none" && Inbox)
                         return true;
                 }
                 return false;
