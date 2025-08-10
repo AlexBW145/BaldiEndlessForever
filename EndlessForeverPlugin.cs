@@ -402,6 +402,7 @@ Current pre-release version: " + PLUGIN_VERSION, false);
                 { "Mode_Arcade", "Infinite Floors" },
                 { "TAG_Boosted", "WANTED!" },
                 { "men_ArcadeForever", "Infinite Floors Forever" },
+
                 { "Vfx_Juan_Aid", "I'll take care of that!" },
                 { "Vfx_Juan_Welcome", "Oh hello there, my name is Juan!" },
                 { "Vfx_Juan_Welcome2", "And welcome to my upgrade warehouse." },
@@ -419,6 +420,9 @@ Current pre-release version: " + PLUGIN_VERSION, false);
                 { "Vfx_Juan_BusPass_2", "Thank you so much. I'm gonna have a blast with this one!" },
                 { "Vfx_Juan_FieldTrip", "Welcome! Since you've already came back from my field trip, I've brought back some items for you." },
                 { "Vfx_Juan_FillMap", "Your map is filled and ready!" },
+
+                { "Upg_FreeExit3", "Free Exit++\nSick of getting all the exits? This upgrade automatically does four for you!" },
+                { "Upg_FreeExit4", "Free Exit/\nSick of getting all the exits? This upgrade automatically does half for you!" }
             };
         });
         FloorPick.sliding = Resources.FindObjectsOfTypeAll<SoundObject>().Last(x => x.name == "Slap");
@@ -1594,6 +1598,21 @@ Current pre-release version: " + PLUGIN_VERSION, false);
                 selection = faculty,
                 weight = 99,
             });
+        foreach (var lockedroom in Resources.FindObjectsOfTypeAll<RoomAsset>().Where(rm => rm.category == RoomCategory.Faculty && rm.roomFunctionContainer?.GetComponent<LockedRoomFunction>() != null))
+        {
+            if (((UnityEngine.Object)lockedroom).name.Contains("NormalItems"))
+                genData.lockedRoomAssets.Add(new WeightedRoomAsset()
+                {
+                    selection = lockedroom,
+                    weight = 250
+                });
+            else if (((UnityEngine.Object)lockedroom).name.Contains("HighEndItems"))
+                genData.lockedRoomAssets.Add(new WeightedRoomAsset()
+                {
+                    selection = lockedroom,
+                    weight = 25
+                });
+        }
         var rooms = Resources.FindObjectsOfTypeAll<RoomAsset>();
         switch (genData.lvlObj.type)
         {

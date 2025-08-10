@@ -129,15 +129,14 @@ namespace EndlessFloorsForever.Patches
         static void BootsPatch(ITM_Boots __instance, PlayerManager pm, float ___setTime)
         {
             if (EndlessForeverPlugin.Instance.HasUpgrade("speedyboots"))
-            {
                 __instance.StartCoroutine(BootsNumerator(pm, ___setTime));
-            }
         }
 
         static IEnumerator BootsNumerator(PlayerManager pm, float startTime)
         {
             float time = startTime;
             BootsSpeedManager myChecker = pm.gameObject.GetOrAddComponent<BootsSpeedManager>();
+            myChecker.AddBoot();
             while (time > 0f)
             {
                 time -= Time.deltaTime * pm.PlayerTimeScale;
@@ -162,10 +161,7 @@ namespace EndlessFloorsForever.Patches
                     player.pm.GetMovementStatModifier().AddModifier("staminaDrop", staminaMod);
             }
 
-            public void AddBoot()
-            {
-                bootsActive++;
-            }
+            public void AddBoot() => bootsActive++;
 
             public void RemoveBoot()
             {

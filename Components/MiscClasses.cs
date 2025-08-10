@@ -234,6 +234,7 @@ namespace EndlessFloorsForever.Components
         public List<WeightedRoomAsset> specialRoomAssets => roomAssets[RoomCategory.Special];
         public List<WeightedRoomAsset> officeRoomAssets => roomAssets[RoomCategory.Office];
         public List<WeightedRoomAsset> hallInsertions => roomAssets[RoomCategory.Hall];
+        public List<WeightedRoomAsset> lockedRoomAssets => roomAssets[RoomCategory.Null];
 
         public CustomLevelGenerationParameters lvlObj { get; private set; }
 

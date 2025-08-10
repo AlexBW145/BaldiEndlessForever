@@ -103,7 +103,7 @@ public static class EndlessUpgradeRegisters
                 new UpgradeLevel()
                 {
                     icon="AutoTag",
-                    cost=1200,
+                    cost=800,
                     descLoca="Upg_AutoTag"
                 },
                 new UpgradeLevel()
@@ -130,6 +130,18 @@ public static class EndlessUpgradeRegisters
                     icon="FreeExit2",
                     cost=2500,
                     descLoca="Upg_FreeExit2"
+                },
+                new UpgradeLevel()
+                {
+                    icon="FreeExit3",
+                    cost=4000,
+                    descLoca="Upg_FreeExit3"
+                },
+                new UpgradeLevel()
+                {
+                    icon="FreeExit4",
+                    cost=55000,
+                    descLoca="Upg_FreeExit4"
                 }
             }
         });
@@ -141,13 +153,13 @@ public static class EndlessUpgradeRegisters
                 new UpgradeLevel()
                 {
                     icon="Bank1",
-                    cost=1000,
+                    cost=500,
                     descLoca="Upg_Bank"
                 },
                 new UpgradeLevel()
                 {
                     icon="Bank2",
-                    cost=500,
+                    cost=1000,
                     descLoca="Upg_Bank"
                 },
                 new UpgradeLevel()
@@ -283,7 +295,7 @@ public static class EndlessUpgradeRegisters
                 new UpgradeLevel()
                 {
                     icon="HungryBully",
-                    cost=1200,
+                    cost=900,
                     descLoca="Upg_HungryBully"
                 }
             }
@@ -445,7 +457,7 @@ public static class EndlessUpgradeRegisters
                 new UpgradeLevel()
                 {
                     icon="ClockSlow",
-                    cost=3000,
+                    cost=2500,
                     descLoca="Upg_Timeslow"
                 },
                 new UpgradeLevel()

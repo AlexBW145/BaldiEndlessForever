@@ -37,7 +37,7 @@ class ExitUpgrade : StandardUpgrade
 {
     public ExitUpgrade(string id, int weight) : base(id, weight) { }
 
-    public override bool ShouldAppear(int currentLevel) => base.ShouldAppear(currentLevel) && (EndlessForeverPlugin.currentFloorData.exitCount > (currentLevel + 1));
+    public override bool ShouldAppear(int currentLevel) => base.ShouldAppear(currentLevel) && (EndlessForeverPlugin.currentFloorData.exitCount > (currentLevel + 1) * 2);
 }
 
 class SlotUpgrade : StandardUpgrade

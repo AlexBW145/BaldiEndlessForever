@@ -88,7 +88,7 @@ namespace EndlessFloorsForever.Patches
         }
     }
 
-    [HarmonyPatch(typeof(LockedRoomFunction), nameof(LockedRoomFunction.AfterRoomValuesCalculated))]
+    [HarmonyPatch(typeof(LockedRoomFunction), nameof(LockedRoomFunction.OnGenerationFinished))]
     class BusPassed
     {
         static WeightedItemObject presentWeighted => new WeightedItemObject()
@@ -96,10 +96,14 @@ namespace EndlessFloorsForever.Patches
             selection = EndlessForeverPlugin.arcadeAssets.Get<ItemObject>("RandomPresent"),
             weight = 70
         };
-        static void Prefix(ref WeightedItemObject[] ___potentialHighEndItems)
+        static void Postfix(ref RoomController ___room)
         {
-            if (EndlessForeverPlugin.Instance.InGameMode)
-                ___potentialHighEndItems.DoIf(x => x.selection.itemType == Items.BusPass, x => x = presentWeighted);
+            if (CoreGameManager.Instance.sceneObject == EndlessForeverPlugin.Instance.inflevel)
+                for (int i = 0; i < ___room.pickups.Count; i++)
+                {
+                    if (___room.pickups[i].item.itemType == Items.BusPass)
+                        ___room.pickups[i].AssignItem(presentWeighted.selection);
+                }
         }
     }
 }

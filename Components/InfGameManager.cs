@@ -319,6 +319,7 @@ public class InfGameManager : MainGameManager
         RoomGroup lockedRooms = lvlObj.roomGroup.First(x => x.name == "LockedRoom");
         lockedRooms.minRooms = Mathf.Min(Mathf.CeilToInt(currentFD.minFacultyRoomCount / 6f) - 1, 6);
         lockedRooms.maxRooms = Mathf.Min(Mathf.CeilToInt(currentFD.maxFacultyRoomCount / 8f) - 1, 6);
+        lockedRooms.potentialRooms = genData.lockedRoomAssets.ToArray();
         if (EndlessForeverPlugin.Instance.forceSets.Value || purerng.NextDouble() > 0.5)
         {
             facultyRoomGroup.floorTexture = [new WeightedTexture2D() { weight = 100, selection = potentialFSets[SetFVal].Item3 }];

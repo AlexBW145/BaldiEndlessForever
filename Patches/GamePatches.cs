@@ -156,17 +156,16 @@ namespace EndlessFloorsForever.Patches
             {
                 List<int> possibleElevators = new List<int>();
                 for (int i = 0; i < __instance.elevators.Count; i++)
-                {
                     possibleElevators.Add(i);
-                }
-                int elevatorsToClose = EndlessForeverPlugin.Instance.GetUpgradeCount("freeexit");
+                int elevatorsToClose = EndlessForeverPlugin.Instance.GetUpgradeCount("freeexit") == 4 ? __instance.elevators.Count / 2 : 
+                    EndlessForeverPlugin.Instance.GetUpgradeCount("freeexit") == 3 ? 4 : EndlessForeverPlugin.Instance.GetUpgradeCount("freeexit"); // Hardcoded because of PineDebug's able to bypass the level counts even if already maxed out the upgrade.
                 while (elevatorsToClose > 0)
                 {
                     int random = UnityEngine.Random.Range(0, possibleElevators.Count);
                     int selectedId = possibleElevators[random];
                     possibleElevators.RemoveAt(random);
                     Elevator toClose = __instance.elevators[selectedId];
-                    hasPlayer.SetValue(toClose.ColliderGroup, true); //there is totally a player here yes absolutely DO NOT QUESTION ANYTHING THERE IS A PLAYER HERE
+                    hasPlayer.SetValue(toClose.ColliderGroup, true); // No comment here.
                     elevatorsToClose--;
                 }
             }
@@ -175,7 +174,7 @@ namespace EndlessFloorsForever.Patches
         [HarmonyPatch(typeof(TimeOut), nameof(TimeOut.Begin)), HarmonyPostfix]
         static void Time99th()
         {
-            if (EndlessForeverPlugin.Instance.gameSave.IsInfGamemode && EndlessForeverPlugin.currentFloorData.FloorID % 99 == 0)
+            if (CoreGameManager.Instance.sceneObject == EndlessForeverPlugin.Instance.inflevel && EndlessForeverPlugin.currentFloorData.FloorID % 99 == 0)
                 MusicManager.Instance.PlayMidi(EndlessForeverPlugin.arcadeAssets.Get<string>("F99Finale"), true);
         }
     }
