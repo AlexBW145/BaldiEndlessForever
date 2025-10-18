@@ -1577,6 +1577,16 @@ Current pre-release version: " + PLUGIN_VERSION, false);
             {
                 selection = rngs.Get(RandomEventType.MysteryRoom).value,
                 weight = 50
+            },
+            new WeightedRandomEvent()
+            {
+                selection = rngs.Get(RandomEventType.StudentShuffle).value,
+                weight = 65
+            },
+            new WeightedRandomEvent()
+            {
+                selection = rngs.Get(RandomEventType.BalderDash).value,
+                weight = 90
             }
         ]);
         Dictionary<RandomEvent, WeightedRandomEvent> events = new Dictionary<RandomEvent, WeightedRandomEvent>();

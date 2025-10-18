@@ -21,7 +21,7 @@ public class InfGameManager : MainGameManager
     }
     protected new void Start() => UpdateData();
 
-    private bool IsModifiedOutside(CustomLevelGenerationParameters parameter, CustomLevelGenerationParameters copy, ArcadeParameterOrder order)
+    protected bool IsModifiedOutside(CustomLevelGenerationParameters parameter, CustomLevelGenerationParameters copy, ArcadeParameterOrder order)
     {
         var infos = typeof(LevelGenerationParameters).GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).ToList();
         switch (order)
@@ -50,7 +50,7 @@ public class InfGameManager : MainGameManager
         return false;
     }
 
-    private CustomLevelGenerationParameters Makecopy(CustomLevelGenerationParameters parameter)
+    protected CustomLevelGenerationParameters Makecopy(CustomLevelGenerationParameters parameter)
     {
         var infos = typeof(LevelGenerationParameters).GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         CustomLevelGenerationParameters thecopy = new CustomLevelGenerationParameters();
@@ -158,7 +158,7 @@ public class InfGameManager : MainGameManager
             lvlObj.hallCeilingTexs = [.. lvlObj.hallCeilingTexs, .. EndlessForeverPlugin.ceilTextures.ToArray()];
         }
 
-        // Structures that is part of main gameplay
+        // Structures that are part of main gameplay
         var structures = ((StructureWithParameters[])lvlObj.forcedStructures.Clone()).ToList();
         foreach (var structure in structures)
         {

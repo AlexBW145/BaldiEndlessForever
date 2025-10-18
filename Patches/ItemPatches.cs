@@ -207,7 +207,7 @@ namespace EndlessFloorsForever.Patches
             elligableNPCs.Do(x =>
             {
                 var meta = x.GetMeta();
-                if (x.Character == Character.Principal || x.GetType().Equals(typeof(Principal)) || !meta.flags.HasFlag(NPCFlags.HasTrigger) || meta.tags.Contains("infarcade_favoritisminvulnerable")) return;
+                if (x.Character == Character.Principal || x.GetType().Equals(typeof(Principal)) || meta?.flags.HasFlag(NPCFlags.HasTrigger) == false || meta?.tags.Contains("infarcade_favoritisminvulnerable") == true) return;
                 _setGuilt.Invoke(x, [10f, "Bullying"]);
             });
         }
